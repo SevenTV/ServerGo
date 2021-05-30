@@ -52,6 +52,30 @@ discord:
   webhook: ["<webhook_id>", "<webhook_token>"] 
 
 chatterino:
-  version: "7.0.0"
-  portable_download: ""
-  update: ""
+  version: "7.3.2"
+  stable:
+    win:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Installer.exe"
+      portable_download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Portable.zip"
+      updateexe: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Installer.exe"
+    linux:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino-x86_64.AppImage"
+      portable_download: ""
+      updateexe: ""
+    macos:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.dmg"
+      portable_download: ""
+      updateexe: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.dmg"
+  beta:
+    win:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Installer.exe"
+      portable_download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Portable.zip"
+      updateexe: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.Installer.exe"
+    linux:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino-x86_64.AppImage"
+      portable_download: ""
+      updateexe: ""
+    macos:
+      download: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.dmg"
+      portable_download: ""
+      updateexe: "https://github.com/SevenTV/chatterino7/releases/download/7.3.2/Chatterino.dmg"
