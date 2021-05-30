@@ -29,6 +29,7 @@ func Chatterino(app fiber.Router) fiber.Router {
 			return c.Status(500).SendString(err.Error())
 		}
 
+		c.Set("Content-Type", "application/json")
 		return c.Status(200).Send(b)
 	})
 
