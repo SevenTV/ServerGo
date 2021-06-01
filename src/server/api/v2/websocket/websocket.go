@@ -166,7 +166,7 @@ func WebSocket(app fiber.Router) {
 
 type Conn struct {
 	*websocket.Conn
-	helpers WebSocketHelpers
+	helpers webSocketHelpers
 	Stat    Stat
 }
 
@@ -174,7 +174,9 @@ func transform(ws *websocket.Conn) *Conn {
 	id := uuid.New()
 	return &Conn{
 		ws,
-		WebSocketHelpers{},
+		webSocketHelpers{
+			subscriberCallersUserEmotes: make(map[string]*eventCallback),
+		},
 		Stat{
 			UUID:          id,
 			Subscriptions: []WebSocketSubscription{},
