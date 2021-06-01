@@ -108,9 +108,9 @@ func (h *webSocketHelpers) SubscriberChannelUserEmotes(ctx context.Context, user
 				h.callbackMtx.Lock()
 				delete(h.subscriberCallersUserEmotes, userID)
 				h.callbackMtx.Unlock()
+				cancel()
 			}()
 			v.start(vctx)
-			cancel()
 		}()
 		h.subscriberCallersUserEmotes[userID] = v
 	}
