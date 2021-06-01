@@ -29,13 +29,16 @@ func awaitHeartbeat(ctx context.Context, c *Conn, duration time.Duration) func()
 			}
 		}()
 		// Wait for the user to send a heartbeat, or the socket will timeout
-		select {
-		case <-ctx.Done(): // Connection ends
-			return
-		case <-time.After(duration + time.Second*30): // Client does not send heartbeat: timeout
-			if time.Since(lastTrigger) > duration+time.Second*30 {
-				c.SendClosure(websocket.ClosePolicyViolation, "Client failed to send heartbeat")
+		for {
+			select {
+			case <-ctx.Done(): // Connection ends
 				return
+			case <-time.After(duration + time.Second*30):
+				// Client does not send heartbeat: timeout
+				if time.Since(lastTrigger) > duration+time.Second*30 {
+					c.SendClosure(websocket.ClosePolicyViolation, "Client failed to send heartbeat")
+					return
+				}
 			}
 		}
 	}()
