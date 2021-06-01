@@ -39,7 +39,7 @@ func Cleanup() {
 	mtx.Lock()
 	log.Infof("<WebSocket> Closing %d connections", len(connections))
 	for _, conn := range connections {
-		conn.Unregister(context.Background())
+		_ = conn.Close()
 	}
 	mtx.Unlock()
 	wg.Wait()
@@ -86,8 +86,9 @@ func WebSocket(app fiber.Router) {
 		// chIdentified := make(chan bool)
 
 		defer func() {
-			cancel() // Cancel the context so everything closes up
-			wg.Done()
+			// Cancel the context so everything closes up
+			cancel()
+			defer wg.Done()
 			log.Infof("<WS> Disconnect: %v", c.RemoteAddr().String())
 
 			// Handle connection removal
