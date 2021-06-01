@@ -9,14 +9,7 @@ import (
 )
 
 func awaitHeartbeat(ctx context.Context, c *Conn, duration time.Duration) func() {
-	defer func() {
-		if err := recover(); err != nil {
-			log.WithField("err", err).Error("panic")
-		}
-	}()
 	ticker := time.NewTicker(duration + time.Second*30)
-	defer ticker.Stop()
-
 	lastTrigger := time.Time{}
 
 	trigger := func() {
@@ -28,6 +21,7 @@ func awaitHeartbeat(ctx context.Context, c *Conn, duration time.Duration) func()
 	}
 
 	go func() {
+		defer ticker.Stop()
 		defer func() {
 			if err := recover(); err != nil {
 				log.WithField("err", err).Error("panic")
@@ -44,5 +38,6 @@ func awaitHeartbeat(ctx context.Context, c *Conn, duration time.Duration) func()
 			}
 		}
 	}()
+
 	return trigger
 }
