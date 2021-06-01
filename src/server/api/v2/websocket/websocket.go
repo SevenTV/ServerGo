@@ -18,7 +18,11 @@ import (
 
 const heartbeatInterval int32 = 90 // Heartbeat interval in seconds
 
-var Connections = make(map[uuid.UUID]*Conn)
+var (
+	connections = make(map[uuid.UUID]*Conn)
+	mtx         = sync.Mutex{}
+	wg          = sync.WaitGroup{}
+)
 
 type Stat struct {
 	UUID          uuid.UUID               `json:"id"`     // The connection's unique ID
@@ -29,6 +33,16 @@ type Stat struct {
 	IP            string                  `json:"ip"`     // The client's IP Address
 	Lock          *sync.Mutex
 	RedisKey      string
+}
+
+func Cleanup() {
+	mtx.Lock()
+	log.Infof("<WebSocket> Closing %d connections", len(connections))
+	for _, conn := range connections {
+		conn.Unregister(context.Background())
+	}
+	mtx.Unlock()
+	wg.Wait()
 }
 
 func WebSocket(app fiber.Router) {
@@ -46,10 +60,10 @@ func WebSocket(app fiber.Router) {
 			}
 
 			c.Locals("ClientIP", ip)
-			c.Locals("allowed", true)
 			return c.Next()
 		}
-		return fiber.ErrUpgradeRequired
+		// Upgrade Required
+		return c.SendStatus(426)
 	})
 
 	// WebSocket Endpoint:
@@ -62,15 +76,31 @@ func WebSocket(app fiber.Router) {
 		log.Infof("<WS> Connect: %v", c.RemoteAddr().String())
 		ctx, cancel := context.WithCancel(context.WithValue(context.Background(), WebSocketConnKey, c))
 		c.Register(ctx)
-		Connections[c.Stat.UUID] = c
+		mtx.Lock()
+		connections[c.Stat.UUID] = c
+		mtx.Unlock()
+
+		wg.Add(1)
 
 		// Event channels
-		chIdentified := make(chan bool)
-		chHeartbeat := make(chan WebSocketMessageInbound)
+		// chIdentified := make(chan bool)
+
+		defer func() {
+			cancel() // Cancel the context so everything closes up
+			wg.Done()
+			log.Infof("<WS> Disconnect: %v", c.RemoteAddr().String())
+
+			// Handle connection removal
+			c.Unregister(ctx)
+			c.Stat.Closed = true // Set closed stat to true
+			mtx.Lock()
+			delete(connections, c.Stat.UUID) // Remove from connections map
+			mtx.Unlock()
+		}()
 
 		// Wait for the client to send their first heartbeat
 		// Failure to do so in time will disconnect the socket
-		go awaitHeartbeat(ctx, c, chHeartbeat, 0)
+		heartbeat := awaitHeartbeat(ctx, c, time.Duration(heartbeatInterval)*time.Second)
 
 		// We will disconnect clients who don't create a subscription
 		// These connections are considered stale, as they serve no purpose
@@ -80,63 +110,56 @@ func WebSocket(app fiber.Router) {
 			}
 		})
 
+		var (
+			b   []byte
+			err error
+			msg WebSocketMessageInbound
+		)
+
 		for { // Listen to client messages
-			if _, b, err := c.ReadMessage(); err == nil {
-				var msg WebSocketMessageInbound
-
-				// Handle invalid payload
-				if err = json.Unmarshal(b, &msg); err != nil {
-					c.SendClosure(websocket.CloseInvalidFramePayloadData, fmt.Sprintf("Invalid JSON: %v", err))
-					break
-				}
-
-				switch msg.Op {
-				// Opcode: HEARTBEAT (Client signals the server that the connection is alive)
-				case WebSocketMessageOpHeartbeat:
-					chHeartbeat <- msg
-					go awaitHeartbeat(ctx, c, chHeartbeat, time.Second*time.Duration(heartbeatInterval)) // Start waiting for the next heartbeat
-
-				// Opcode: IDENTIFY (Client wants to sign in to make authorized commands)
-				case WebSocketMessageOpIdentify:
-					chIdentified <- true
-
-				// Opcode: SUBSCRIBE (Client wants to start receiving events from a specified source)
-				case WebSocketMessageOpSubscribe:
-					var data WebSocketSubscription
-					c.decodeMessageData(ctx, msg, &data) // Decode message data
-
-					subscription := data.Type // The subscription that the client wants to create
-
-					c.Stat.Subscriptions = append(c.Stat.Subscriptions, data)
-					c.Register(ctx)
-					noOpTimeout.Stop() // Prevent a no-op timeout from happening: the user has done something
-
-					switch subscription {
-					case WebSocketSubscriptionChannelEmotes: // Subscribe: CHANNEL EMOTES
-						channel := data.Params["channel"]
-						go createChannelEmoteSubscription(ctx, c, channel)
-
-					default: // Unknown Subscription
-						c.SendClosure(1003, "Unknown Subscription Type")
-					}
-
-				default:
-					c.SendClosure(1003, "Invalid Opcode")
-				}
-			} else {
+			if _, b, err = c.ReadMessage(); err == nil {
+				return
+			}
+			// Handle invalid payload
+			if err = json.Unmarshal(b, &msg); err != nil {
+				c.SendClosure(websocket.CloseInvalidFramePayloadData, fmt.Sprintf("Invalid JSON: %v", err))
 				break
 			}
+
+			switch msg.Op {
+			// Opcode: HEARTBEAT (Client signals the server that the connection is alive)
+			case WebSocketMessageOpHeartbeat:
+				heartbeat()
+
+			// Opcode: IDENTIFY (Client wants to sign in to make authorized commands)
+			case WebSocketMessageOpIdentify:
+				// TODO
+				// chIdentified <- true
+
+			// Opcode: SUBSCRIBE (Client wants to start receiving events from a specified source)
+			case WebSocketMessageOpSubscribe:
+				var data WebSocketSubscription
+				c.decodeMessageData(ctx, msg, &data) // Decode message data
+
+				subscription := data.Type // The subscription that the client wants to create
+
+				c.Stat.Subscriptions = append(c.Stat.Subscriptions, data)
+				c.Register(ctx)
+				noOpTimeout.Stop() // Prevent a no-op timeout from happening: the user has done something
+
+				switch subscription {
+				case WebSocketSubscriptionChannelEmotes: // Subscribe: CHANNEL EMOTES
+					channel := data.Params["channel"]
+					go createChannelEmoteSubscription(ctx, c, channel)
+
+				default: // Unknown Subscription
+					c.SendClosure(1003, "Unknown Subscription Type")
+				}
+
+			default:
+				c.SendClosure(1003, "Invalid Opcode")
+			}
 		}
-
-		cancel() // Cancel the context so everything closes up
-		log.Infof("<WS> Disconnect: %v", c.RemoteAddr().String())
-
-		// Handle connection removal
-		c.Unregister(ctx)
-		c.Stat.Closed = true             // Set closed stat to true
-		delete(Connections, c.Stat.UUID) // Remove from connections map
-		close(chIdentified)
-		close(chHeartbeat)
 	}))
 }
 

@@ -49,7 +49,6 @@ func main() {
 
 		wg := sync.WaitGroup{}
 
-		wg.Wait()
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -86,10 +85,7 @@ func main() {
 
 func Cleanup() {
 	// Remove websocket connections from Redis
-	log.Infof("<WebSocket> Closing %d connections", len(api_websocket.Connections))
-	for _, conn := range api_websocket.Connections {
-		conn.Unregister(context.Background())
-	}
+	api_websocket.Cleanup()
 
 	// Logout from discord
 	_ = discord.Discord.CloseWithCode(1000)
