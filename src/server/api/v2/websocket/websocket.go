@@ -80,10 +80,16 @@ func WebSocket(app fiber.Router) {
 		// This socket has connected
 		log.Infof("<WS> Connect: %v", c.RemoteAddr().String())
 		ctx, cancel := context.WithCancel(context.WithValue(context.Background(), WebSocketConnKey, c))
+		c.cancel = cancel
 		c.Register(ctx)
 		mtx.Lock()
 		connections[c.Stat.UUID] = c
 		mtx.Unlock()
+
+		c.SetCloseHandler(func(code int, text string) error {
+			cancel()
+			return nil
+		})
 
 		wg.Add(1)
 
@@ -92,7 +98,6 @@ func WebSocket(app fiber.Router) {
 
 		defer func() {
 			// Cancel the context so everything closes up
-			cancel()
 			defer wg.Done()
 			log.Infof("<WS> Disconnect: %v", c.RemoteAddr().String())
 
@@ -122,50 +127,55 @@ func WebSocket(app fiber.Router) {
 			msg WebSocketMessageInbound
 		)
 
-		for { // Listen to client messages
-			if _, b, err = c.ReadMessage(); err != nil {
-				return
-			}
-			// Handle invalid payload
-			if err = json.Unmarshal(b, &msg); err != nil {
-				c.SendClosure(websocket.CloseInvalidFramePayloadData, fmt.Sprintf("Invalid JSON: %v", err))
-				break
-			}
-
-			switch msg.Op {
-			// Opcode: HEARTBEAT (Client signals the server that the connection is alive)
-			case WebSocketMessageOpHeartbeat:
-				heartbeat()
-
-			// Opcode: IDENTIFY (Client wants to sign in to make authorized commands)
-			case WebSocketMessageOpIdentify:
-				// TODO
-				// chIdentified <- true
-
-			// Opcode: SUBSCRIBE (Client wants to start receiving events from a specified source)
-			case WebSocketMessageOpSubscribe:
-				var data WebSocketSubscription
-				c.decodeMessageData(ctx, msg, &data) // Decode message data
-
-				subscription := data.Type // The subscription that the client wants to create
-
-				c.Stat.Subscriptions = append(c.Stat.Subscriptions, data)
-				c.Register(ctx)
-				noOpTimeout.Stop() // Prevent a no-op timeout from happening: the user has done something
-
-				switch subscription {
-				case WebSocketSubscriptionChannelEmotes: // Subscribe: CHANNEL EMOTES
-					channel := data.Params["channel"]
-					go createChannelEmoteSubscription(ctx, c, channel)
-
-				default: // Unknown Subscription
-					c.SendClosure(1003, "Unknown Subscription Type")
+		go func() {
+			defer cancel()
+			for { // Listen to client messages
+				if _, b, err = c.ReadMessage(); err != nil {
+					return
+				}
+				// Handle invalid payload
+				if err = json.Unmarshal(b, &msg); err != nil {
+					c.SendClosure(websocket.CloseInvalidFramePayloadData, fmt.Sprintf("Invalid JSON: %v", err))
+					return
 				}
 
-			default:
-				c.SendClosure(1003, "Invalid Opcode")
+				switch msg.Op {
+				// Opcode: HEARTBEAT (Client signals the server that the connection is alive)
+				case WebSocketMessageOpHeartbeat:
+					heartbeat()
+
+				// Opcode: IDENTIFY (Client wants to sign in to make authorized commands)
+				case WebSocketMessageOpIdentify:
+					// TODO
+					// chIdentified <- true
+
+				// Opcode: SUBSCRIBE (Client wants to start receiving events from a specified source)
+				case WebSocketMessageOpSubscribe:
+					var data WebSocketSubscription
+					c.decodeMessageData(ctx, msg, &data) // Decode message data
+
+					subscription := data.Type // The subscription that the client wants to create
+
+					c.Stat.Subscriptions = append(c.Stat.Subscriptions, data)
+					c.Register(ctx)
+					noOpTimeout.Stop() // Prevent a no-op timeout from happening: the user has done something
+
+					switch subscription {
+					case WebSocketSubscriptionChannelEmotes: // Subscribe: CHANNEL EMOTES
+						channel := data.Params["channel"]
+						go createChannelEmoteSubscription(ctx, c, channel)
+
+					default: // Unknown Subscription
+						c.SendClosure(1003, "Unknown Subscription Type")
+					}
+
+				default:
+					c.SendClosure(1003, "Invalid Opcode")
+				}
 			}
-		}
+		}()
+
+		<-ctx.Done()
 	}))
 }
 
@@ -173,6 +183,12 @@ type Conn struct {
 	*websocket.Conn
 	helpers webSocketHelpers
 	Stat    Stat
+	cancel  context.CancelFunc
+}
+
+func (c *Conn) Close() error {
+	c.cancel()
+	return c.Conn.Close()
 }
 
 func transform(ws *websocket.Conn) *Conn {
