@@ -194,11 +194,11 @@ func (c *Conn) Close() error {
 func transform(ws *websocket.Conn) *Conn {
 	id := uuid.New()
 	return &Conn{
-		ws,
-		webSocketHelpers{
+		Conn: ws,
+		helpers: webSocketHelpers{
 			subscriberCallersUserEmotes: make(map[string]*eventCallback),
 		},
-		Stat{
+		Stat: Stat{
 			UUID:          id,
 			Subscriptions: []WebSocketSubscription{},
 			CreatedAt:     time.Now(),
