@@ -100,6 +100,7 @@ func (h *webSocketHelpers) SubscriberChannelUserEmotes(ctx context.Context, user
 		v = &eventCallback{
 			callbacks: make(map[uuid.UUID]func(emoteSubscriptionResult)),
 			ctx:       vctx,
+			userID:    userID,
 		}
 		go func() {
 			defer func() {
