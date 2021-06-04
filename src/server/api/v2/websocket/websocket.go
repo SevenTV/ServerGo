@@ -118,7 +118,7 @@ func WebSocket(app fiber.Router) {
 		)
 
 		for { // Listen to client messages
-			if _, b, err = c.ReadMessage(); err == nil {
+			if _, b, err = c.ReadMessage(); err != nil {
 				return
 			}
 			// Handle invalid payload

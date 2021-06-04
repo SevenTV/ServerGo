@@ -96,11 +96,12 @@ func (h *webSocketHelpers) SubscriberChannelUserEmotes(ctx context.Context, user
 	h.callbackMtx.Lock()
 	v, ok := h.subscriberCallersUserEmotes[userID]
 	if !ok {
+		vctx, cancel := context.WithCancel(context.Background())
 		v = &eventCallback{
 			callbacks: make(map[uuid.UUID]func(emoteSubscriptionResult)),
+			ctx:       vctx,
 		}
 		go func() {
-			vctx, cancel := context.WithCancel(context.Background())
 			defer func() {
 				if err := recover(); err != nil {
 					log.WithField("err", err).Error("panic")
