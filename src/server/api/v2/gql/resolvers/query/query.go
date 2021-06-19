@@ -131,7 +131,7 @@ func (*QueryResolver) User(ctx context.Context, args struct{ ID string }) (*User
 			id = &u.ID
 		}
 		if isMe && user.ID.IsZero() { // Handle error: current user requested but request was unauthenticated
-			return nil, fmt.Errorf("Cannot request @me while unauthenticated")
+			return nil, fmt.Errorf("cannot request @me while unauthenticated")
 		}
 	} else if !primitive.IsValidObjectID(args.ID) {
 		if err := cache.FindOne(ctx, "users", "", bson.M{
@@ -585,7 +585,7 @@ func (*QueryResolver) SearchUsers(ctx context.Context, args struct {
 func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	channel := configure.Config.GetString("featured_broadcast")
 	if channel == "" {
-		return "", fmt.Errorf("No Featured Broadcast")
+		return "", fmt.Errorf("no featured broadcast")
 	}
 
 	// test

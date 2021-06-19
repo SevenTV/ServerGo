@@ -287,7 +287,7 @@ func Twitch(app fiber.Router) fiber.Router {
 			if err == nil {
 				_ = res.Decode(&ban)
 				respError = fmt.Errorf(
-					"You are currently banned for '%v'%v",
+					"you are currently banned for '%v'%v",
 					reason,
 					fmt.Sprintf(" until %v", utils.Ternary(ban != nil && !ban.ExpireAt.IsZero(), ban.ExpireAt.Format("Mon, 02 Jan 2006 15:04:05 MST"), "the universe fades out")),
 				)

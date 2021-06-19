@@ -37,6 +37,7 @@ require (
 	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/gographics/imagick.v3 v3.4.0
+	honnef.co/go/tools v0.0.1-2020.1.4
 )
 
 replace github.com/graph-gophers/graphql-go => github.com/troydota/graphql-go v0.0.0-20210513105700-d1faf5042c4f
