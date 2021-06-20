@@ -257,7 +257,14 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 				return nil, resolvers.ErrInvalidName
 			}
 
-			set[fmt.Sprintf("emote_alias.%v", emoteID.Hex())] = alias
+			fmt.Println(channel.EmoteAlias)
+			if len(channel.EmoteAlias) == 0 {
+				set["emote_alias"] = bson.M{
+					emoteID.Hex(): alias,
+				}
+			} else {
+				set[fmt.Sprintf("emote_alias.%v", emoteID.Hex())] = alias
+			}
 		}
 
 		logChanges = append(logChanges, &datastructure.AuditLogChange{
