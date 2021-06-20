@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/SevenTV/ServerGo/src/cache"
-	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/redis"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	api_proxy "github.com/SevenTV/ServerGo/src/server/api/v2/proxy"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -583,7 +583,7 @@ func (*QueryResolver) SearchUsers(ctx context.Context, args struct {
 }
 
 func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
-	channel := configure.Config.GetString("featured_broadcast")
+	channel, _ := redis.Client.Get(ctx, "meta:featured_broadcast").Result()
 	if channel == "" {
 		return "", fmt.Errorf("No Featured Broadcast")
 	}
@@ -592,6 +592,7 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	stream, err := api_proxy.GetTwitchStreams(ctx, channel)
 	if err != nil {
 		log.WithError(err).WithField("channel", channel).Error("query could not get live status of featured broadcast")
+		return "", err
 	}
 
 	if len(stream.Data) == 0 || stream.Data[0].Type != "live" {
@@ -599,4 +600,20 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	}
 
 	return channel, nil
+}
+
+func (*QueryResolver) Meta(ctx context.Context) (*datastructure.Meta, error) {
+	result := datastructure.Meta{}
+
+	// Get announcement
+	if v, err := redis.Client.Get(ctx, "meta:announcement").Result(); err == nil {
+		result.Announcement = v
+	}
+
+	// Get featured broadcast
+	if v, err := redis.Client.Get(ctx, "meta:featured_broadcast").Result(); err == nil {
+		result.FeaturedBroadcast = v
+	}
+
+	return &result, nil
 }

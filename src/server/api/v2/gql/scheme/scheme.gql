@@ -65,6 +65,8 @@ type Query {
   search_users(query: String!, page: Int, limit: Int): [UserPartial]!
   # Get featured stream
   featured_broadcast(): String!
+  # Get meta
+  meta(): Meta!
 }
 
 input EmoteFilter {
@@ -281,4 +283,9 @@ type Ban {
   user: UserPartial
   # The moderator who banned them.
   issued_by: UserPartial
+}
+
+type Meta {
+  announcement: String!
+  featured_broadcast: String!
 }

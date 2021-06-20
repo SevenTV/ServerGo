@@ -303,3 +303,8 @@ type Badge struct {
 	Name    string               `json:"name"`
 	Users   []primitive.ObjectID `json:"users"`
 }
+
+type Meta struct {
+	Announcement      string `json:"announcement"`
+	FeaturedBroadcast string `json:"featured_broadcast"`
+}
