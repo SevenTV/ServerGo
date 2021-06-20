@@ -602,14 +602,19 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	return channel, nil
 }
 
-func (*QueryResolver) Meta(ctx context.Context) (datastructure.Meta, error) {
-	result := datastructure.Meta{}
-
-	// Get announcement
-	result.Announcement = redis.Client.Get(ctx, "meta:announcement").Val()
-
-	// Get featured broadcast
-	result.FeaturedBroadcast = redis.Client.Get(ctx, "meta:featured_broadcast").Val()
-
-	return result, nil
+func (*QueryResolver) Meta(ctx context.Context) datastructure.Meta {
+	pipe := redis.Client.Pipeline()
+	announce := pipe.Get(ctx, "meta:announcement")
+	feat := pipe.Get(ctx, "meta:featured_broadcast")
+	_, _ = pipe.Exec(ctx)
+	if err := announce.Err(); err != nil && err != redis.ErrNil {
+		log.WithError(err).Error("redis")
+	}
+	if err := feat.Err(); err != nil && err != redis.ErrNil {
+		log.WithError(err).Error("redis")
+	}
+	return datastructure.Meta{
+		Announcement:      announce.Val(),
+		FeaturedBroadcast: feat.Val(),
+	}
 }
