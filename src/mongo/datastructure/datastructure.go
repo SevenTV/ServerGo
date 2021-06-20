@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo/cache"
 	"github.com/SevenTV/ServerGo/src/utils"
 	log "github.com/sirupsen/logrus"
@@ -91,8 +92,9 @@ type User struct {
 	Description     string              `json:"description" bson:"description"`
 	CreatedAt       time.Time           `json:"twitch_created_at" bson:"twitch_created_at"`
 	ViewCount       int32               `json:"view_count" bson:"view_count"`
-	EmoteAlias      map[string]string   `json:"-" bson:"emote_alias"` // Emote Alias - backend only
-	Badge           *primitive.ObjectID `json:"badge" bson:"badge"`   // User's badge, if any
+	EmoteAlias      map[string]string   `json:"-" bson:"emote_alias"`           // Emote Alias - backend only
+	Badge           *primitive.ObjectID `json:"badge" bson:"badge"`             // User's badge, if any
+	EmoteSlots      int32               `json:"emote_slots" bson:"emote_slots"` // User's maximum channel emote slots
 
 	// Relational Data
 	Emotes       *[]*Emote    `json:"emotes" bson:"-"`
@@ -103,6 +105,16 @@ type User struct {
 	AuditEntries *[]*AuditLog `json:"audit_entries" bson:"-"`
 	Reports      *[]*Report   `json:"reports" bson:"-"`
 	Bans         *[]*Ban      `json:"bans" bson:"-"`
+}
+
+// Get the user's maximum emote slot count
+func (u *User) GetEmoteSlots() int32 {
+	fmt.Println("hi", u.EmoteSlots)
+	if u.EmoteSlots == 0 {
+		return configure.Config.GetInt32("limits.meta.channel_emote_slots")
+	} else {
+		return u.EmoteSlots
+	}
 }
 
 // Test whether a User has a permission flag

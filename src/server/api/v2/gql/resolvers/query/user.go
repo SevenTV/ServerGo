@@ -495,3 +495,7 @@ func (r *UserResolver) AuditEntries() (*[]*auditResolver, error) {
 
 	return &resolvers, nil
 }
+
+func (r *UserResolver) EmoteSlots() int32 {
+	return r.v.GetEmoteSlots()
+}

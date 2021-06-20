@@ -2,8 +2,6 @@ package resolvers
 
 import (
 	"fmt"
-
-	"github.com/SevenTV/ServerGo/src/configure"
 )
 
 var (
@@ -25,5 +23,7 @@ var (
 	ErrDepth                 = fmt.Errorf("Max Depth Exceeded (%v)", MaxDepth)
 	ErrQueryLimit            = fmt.Errorf("Max Query Limit Exceeded (%v)", QueryLimit)
 	ErrInvalidSortOrder      = fmt.Errorf("SortOrder is either 0 (descending) or 1 (ascending)")
-	ErrEmoteSlotLimitReached = fmt.Errorf("Channel Emote Slots Limit Reached (%v)", configure.Config.GetInt("limits.meta.channel_emote_slots"))
+	ErrEmoteSlotLimitReached = func(count int32) error {
+		return fmt.Errorf("Channel Emote Slots Limit Reached (%d)", count)
+	}
 )

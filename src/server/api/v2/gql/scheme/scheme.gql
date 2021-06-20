@@ -211,6 +211,8 @@ type User {
   bans: [Ban!]
   # Get whether the user is banned
   banned: Boolean!
+  # Get the user's maximum channel emote slots
+  emote_slots: Int!
 }
 
 type UserPartial {
