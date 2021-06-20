@@ -109,7 +109,6 @@ type User struct {
 
 // Get the user's maximum emote slot count
 func (u *User) GetEmoteSlots() int32 {
-	fmt.Println("hi", u.EmoteSlots)
 	if u.EmoteSlots == 0 {
 		return configure.Config.GetInt32("limits.meta.channel_emote_slots")
 	} else {
