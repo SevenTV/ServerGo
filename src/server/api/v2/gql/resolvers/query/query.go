@@ -583,7 +583,7 @@ func (*QueryResolver) SearchUsers(ctx context.Context, args struct {
 }
 
 func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
-	channel, _ := redis.Client.Get(ctx, "meta:featured_broadcast").Result()
+	channel := redis.Client.Get(ctx, "meta:featured_broadcast").Val()
 	if channel == "" {
 		return "", fmt.Errorf("No Featured Broadcast")
 	}
@@ -602,18 +602,14 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	return channel, nil
 }
 
-func (*QueryResolver) Meta(ctx context.Context) (*datastructure.Meta, error) {
+func (*QueryResolver) Meta(ctx context.Context) (datastructure.Meta, error) {
 	result := datastructure.Meta{}
 
 	// Get announcement
-	if v, err := redis.Client.Get(ctx, "meta:announcement").Result(); err == nil {
-		result.Announcement = v
-	}
+	result.Announcement = redis.Client.Get(ctx, "meta:announcement").Val()
 
 	// Get featured broadcast
-	if v, err := redis.Client.Get(ctx, "meta:featured_broadcast").Result(); err == nil {
-		result.FeaturedBroadcast = v
-	}
+	result.FeaturedBroadcast = redis.Client.Get(ctx, "meta:featured_broadcast").Val()
 
-	return &result, nil
+	return result, nil
 }
