@@ -1,6 +1,7 @@
 package emotes
 
 import (
+	"bufio"
 	"fmt"
 	"image/gif"
 	"image/jpeg"
@@ -8,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -225,8 +227,6 @@ func CreateEmoteRoute(router fiber.Router) {
 					log.WithError(err).Error("could not decode webp")
 					return 500, utils.S2B(fmt.Sprintf(errInvalidRequest, err.Error())), nil
 				}
-
-				wand.Destroy()
 			default:
 				return 500, utils.S2B(fmt.Sprintf(errInvalidRequest, "Unsupported File Format")), nil
 			}
@@ -242,7 +242,6 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizes := strings.Split(file[2], "x")
 				maxWidth, _ := strconv.ParseFloat(sizes[0], 4)
 				maxHeight, _ := strconv.ParseFloat(sizes[1], 4)
-				quality := file[3]
 				outFile := fmt.Sprintf("%v/%v.webp", fileDir, scope)
 
 				// Get calculed ratio for the size
@@ -254,39 +253,25 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizeY[i] = int16(height)
 
 				// Create new boundaries for frames
-				mw := imagick.NewMagickWand() // Get magick wand & read the original image
-				if err := mw.ReadImage(ogFilePath); err != nil {
-					return 500, utils.S2B(fmt.Sprintf(errInvalidRequest, "Couldn't read original image: %s", err)), nil
-				}
-				delay := mw.GetImageDelay()
+				cmd := exec.Command("convert", []string{
+					ogFilePath,
+					"-coalesce",
+					"-resize", fmt.Sprintf("%dx%d", width, height),
+					"-define", "webp:lossless=false,auto-filter=true,method=4",
+					outFile,
+				}...)
 
-				// Merge all frames with coalesce
-				aw := mw.CoalesceImages()
-				mw.Destroy()
-				defer aw.Destroy()
-
-				// Set delays
-				mw = imagick.NewMagickWand()
-				mw.SetImageDelay(delay)
-				defer mw.Destroy()
-
-				// Add each frame to our animated image
-				for ind := 0; ind < int(aw.GetNumberImages()); ind++ {
-					aw.SetIteratorIndex(ind)
-					img := aw.GetImage()
-					img.ResizeImage(uint(width), uint(height), imagick.FILTER_LANCZOS)
-					mw.AddImage(img)
-					img.Destroy()
-				}
-
-				// Done - convert to WEBP
-				mw.ResetIterator()
-				q, _ := strconv.Atoi(quality)
-				mw.SetImageCompressionQuality(uint(q))
-				mw.SetImageFormat("webp")
-
-				// Write to file
-				err = mw.WriteImages(outFile, true)
+				// Print output to console for debugging
+				stderr, _ := cmd.StderrPipe()
+				go func() {
+					scan := bufio.NewScanner(stderr) // Create a scanner tied to stdout
+					fmt.Println("--- BEGIN " + cmd.String() + " CMD ---")
+					for scan.Scan() { // Capture stdout, appending it to cmd var and logging to console
+						fmt.Println(scan.Text())
+					}
+					fmt.Println("\n--- END CMD ---")
+				}()
+				err := cmd.Run() // Run the command
 				if err != nil {
 					log.WithError(err).Error("cmd")
 					return 500, errInternalServer, nil
