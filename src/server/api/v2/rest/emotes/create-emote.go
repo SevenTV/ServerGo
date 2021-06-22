@@ -283,7 +283,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				mw.ResetIterator()
 				q, _ := strconv.Atoi(quality)
 				mw.SetImageCompressionQuality(uint(q))
-				mw.SetImageFormat("webp:lossless=true,auto-filter=true,method=6")
+				mw.SetImageFormat("webp")
 
 				// Write to file
 				err = mw.WriteImages(outFile, true)
