@@ -19,7 +19,7 @@ RUN packr2 && apk add pkgconfig imagemagick-dev build-base && go build -o sevent
 # Start fresh from a smaller image
 FROM alpine
 ENV MAGICK_HOME=/usr
-RUN apk update && apk add ca-certificates pkgconfig imagemagick libwebp-tools libwebp-dev libpng-dev jpeg-dev giflib-dev
+RUN apk update && apk add --no-cache ca-certificates pkgconfig imagemagick libwebp-tools libwebp-dev libpng-dev jpeg-dev giflib-dev && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
