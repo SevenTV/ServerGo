@@ -67,9 +67,9 @@ func (*emoteUtil) GetFilesMeta(fileDir string) [][]string {
 	// Define sizes to be generated
 	return [][]string{
 		{fmt.Sprintf("%s/1x", fileDir), "1x", "96x32", "100"},
-		{fmt.Sprintf("%s/2x", fileDir), "2x", "144x48", "90"},  // Upscale: 1x * 1.5
-		{fmt.Sprintf("%s/3x", fileDir), "3x", "228x76", "90"},  // Upscale: 2x * 1.585
-		{fmt.Sprintf("%s/4x", fileDir), "4x", "384x128", "95"}, // Upscale: 3x * 1.685
+		{fmt.Sprintf("%s/2x", fileDir), "2x", "144x48", "90"},
+		{fmt.Sprintf("%s/3x", fileDir), "3x", "228x76", "90"},
+		{fmt.Sprintf("%s/4x", fileDir), "4x", "384x128", "95"},
 	}
 }
 

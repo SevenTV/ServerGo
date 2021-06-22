@@ -75,7 +75,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			ogFilePath := fmt.Sprintf("%v/og", fileDir) // The original file's path in temp
 
 			// Remove temp dir once this function completes
-			// defer os.RemoveAll(fileDir)
+			defer os.RemoveAll(fileDir)
 
 			// Get form data parts
 			channelID = &usr.ID // Default channel ID to the uploader
