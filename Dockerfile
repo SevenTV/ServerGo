@@ -9,15 +9,12 @@ WORKDIR /tmp/app
 COPY go.mod .
 COPY go.sum .
 
-RUN go mod download
-RUN go get -u github.com/gobuffalo/packr/v2/packr2
+RUN go mod download && go get -u github.com/gobuffalo/packr/v2/packr2
 
 COPY . .
 
 # Build the Go app
-RUN packr2
-RUN apk add pkgconfig imagemagick-dev build-base
-RUN go build -o seventv
+RUN packr2 && apk add pkgconfig imagemagick-dev build-base && go build -o seventv
 
 # Start fresh from a smaller image
 FROM alpine
