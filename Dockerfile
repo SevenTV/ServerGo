@@ -1,4 +1,4 @@
-FROM golang:1.16.2-alpine3.13 AS build_base
+FROM golang:1.16.5-alpine3.14 AS build_base
 
 RUN apk add --no-cache git
 
@@ -17,7 +17,7 @@ COPY . .
 RUN packr2 && apk add pkgconfig imagemagick-dev build-base && go build -o seventv
 
 # Start fresh from a smaller image
-FROM alpine
+FROM alpine:3.14
 ENV MAGICK_HOME=/usr
 RUN apk update && apk add --no-cache ca-certificates pkgconfig imagemagick libwebp-tools libwebp-dev libpng-dev jpeg-dev giflib-dev && rm -rf /var/cache/apk/*
 
