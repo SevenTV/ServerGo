@@ -242,6 +242,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizes := strings.Split(file[2], "x")
 				maxWidth, _ := strconv.ParseFloat(sizes[0], 4)
 				maxHeight, _ := strconv.ParseFloat(sizes[1], 4)
+				quality := file[3]
 				outFile := fmt.Sprintf("%v/%v.webp", fileDir, scope)
 
 				// Get calculed ratio for the size
@@ -280,6 +281,8 @@ func CreateEmoteRoute(router fiber.Router) {
 
 				// Done - convert to WEBP
 				mw.ResetIterator()
+				q, _ := strconv.Atoi(quality)
+				mw.SetImageCompressionQuality(uint(q))
 				mw.SetImageFormat("webp:lossless=true,auto-filter=true,method=6")
 
 				// Write to file
