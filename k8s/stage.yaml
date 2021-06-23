@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: 7tv-stageapi
+  namespace: 7tv
+  labels:
+    app: 7tv-stageapi
+spec:
+  serviceName: seventv-stageapi-svc
+  selector:
+    matchLabels:
+      app: 7tv-stageapi
+  template:
+    metadata:
+      labels:
+        app: 7tv-stageapi
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: 7tv-stageapi
+          image: ghcr.io/seventv/servergo:latest
+          imagePullPolicy: IfNotPresent
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+              httpHeaders:
+                - name: User-Agent
+                  value: InternalLivenessProbe
+
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - mountPath: /app/config.yaml
+              subPath: config.yaml
+              name: config
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "600m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+          ports:
+            - containerPort: 3000
+      volumes:
+        - name: config
+          configMap:
+            name: stageapi-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seventv-stageapi-svc
+spec:
+  selector:
+    app: 7tv-stageapi
+  ports:
+    - port: 80
+      name: http
+      targetPort: 3000
+    - port: 443
+      name: https
+      targetPort: 3000
