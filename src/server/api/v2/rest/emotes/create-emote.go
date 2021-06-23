@@ -262,11 +262,13 @@ func CreateEmoteRoute(router fiber.Router) {
 
 				// Merge all frames with coalesce
 				aw := mw.CoalesceImages()
+				aw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500)
 				mw.Destroy()
 				defer aw.Destroy()
 
 				// Set delays
 				mw = imagick.NewMagickWand()
+				mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500)
 				mw.SetImageDelay(delay)
 				defer mw.Destroy()
 
