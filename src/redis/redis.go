@@ -19,6 +19,7 @@ var (
 
 func init() {
 	options, err := redis.ParseURL(configure.Config.GetString("redis_uri"))
+	options.DB = configure.Config.GetInt("redis_db")
 	if err != nil {
 		log.WithError(err).Fatal("redis failed")
 	}
