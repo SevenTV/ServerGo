@@ -35,6 +35,17 @@ spec:
                   number: 80
 
 
+    - host: stage.7tv.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: seventv-webapp-stage-svc
+                port:
+                  number: 80
+
     - host: api-stage.7tv.app
       http:
         paths:
@@ -42,7 +53,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: seventv-goapi-svc
+                name: seventv-stageapi-svc
                 port:
                   number: 80
 
