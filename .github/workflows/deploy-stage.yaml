@@ -2,7 +2,7 @@ name: 7TV Go API Deploy
 
 on:
   push:
-    branches: [master]
+    branches: [stage]
 
   workflow_dispatch:
 
@@ -56,7 +56,7 @@ jobs:
             (echo $KUBE_CONFIG_DATA | base64 -d) >> ~/.kube/config
             kubectl config use-context 7tv-as-deployer
 
-            kubectl apply -f k8s/production.yaml
-            kubectl patch $KUBE_RESOURCE 7tv-goapi --type="json" -p="$KUBE_IMAGE_PATCH"
+            kubectl apply -f k8s/stage.yaml
+            kubectl patch $KUBE_RESOURCE 7tv-stageapi --type="json" -p="$KUBE_IMAGE_PATCH"
 
-            kubectl rollout restart -n 7tv sts/7tv-goapi
+            kubectl rollout restart -n 7tv sts/7tv-stageapi
