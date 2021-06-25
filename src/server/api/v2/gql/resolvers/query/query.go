@@ -135,7 +135,10 @@ func (*QueryResolver) User(ctx context.Context, args struct{ ID string }) (*User
 		}
 	} else if !primitive.IsValidObjectID(args.ID) {
 		if err := cache.FindOne(ctx, "users", "", bson.M{
-			"login": strings.ToLower(args.ID),
+			"$or": bson.A{
+				bson.M{"login": strings.ToLower(args.ID)},
+				bson.M{"id": args.ID},
+			},
 		}, user); err != nil {
 			if err == mongo.ErrNoDocuments {
 				return nil, nil
