@@ -462,13 +462,6 @@ func (*QueryResolver) ThirdPartyEmotes(ctx context.Context, args struct {
 		return nil, resolvers.ErrDepth
 	}
 
-	// TEMPORARY FIX:
-	// FORCE FFZ EMOTES.
-	// THIS SHOULD BE REMOVED WHEN THE WEB EXTENSION IS FIXED
-	if !utils.Contains(args.Providers, "FFZ") {
-		args.Providers = append(args.Providers, "FFZ")
-	}
-
 	// Query foreign APIs for requested third party emotes
 	var emotes []*datastructure.Emote
 	var globalEmotes []*datastructure.Emote
