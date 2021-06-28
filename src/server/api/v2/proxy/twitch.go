@@ -19,16 +19,13 @@ func GetTwitchUser(ctx context.Context, login string) (*userTwitch, error) {
 	uri := fmt.Sprintf("%v/helix/users?login=%v", baseUrlTwitch, login)
 
 	// Get auth
-	token, err := auth.GetAuth(ctx)
+	headers, err := getTwitchAuthorizeHeaders(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Send request
-	resp, err := cache.CacheGetRequest(ctx, uri, time.Minute*30, time.Minute*15,
-		RequestHeadersKeyValuePairs{Key: "Client-ID", Value: configure.Config.GetString("twitch_client_id")},
-		RequestHeadersKeyValuePairs{Key: "Authorization", Value: fmt.Sprintf("Bearer %v", token)},
-	)
+	resp, err := cache.CacheGetRequest(ctx, uri, time.Minute*30, time.Minute*15, headers...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,16 +48,13 @@ func GetTwitchStreams(ctx context.Context, logins ...string) (*streamsResponseTw
 	uri := fmt.Sprintf("%v/helix/streams?user_login=%v", baseUrlTwitch, strings.Join(logins, ","))
 
 	// Get auth
-	token, err := auth.GetAuth(ctx)
+	headers, err := getTwitchAuthorizeHeaders(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Send request
-	resp, err := cache.CacheGetRequest(ctx, uri, time.Minute*5, time.Minute*2,
-		RequestHeadersKeyValuePairs{Key: "Client-ID", Value: configure.Config.GetString("twitch_client_id")},
-		RequestHeadersKeyValuePairs{Key: "Authorization", Value: fmt.Sprintf("Bearer %v", token)},
-	)
+	resp, err := cache.CacheGetRequest(ctx, uri, time.Minute*2+time.Second*30, time.Minute*2, headers...)
 	if err != nil {
 		return nil, err
 	}
