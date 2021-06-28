@@ -499,3 +499,41 @@ func (r *UserResolver) AuditEntries() (*[]*auditResolver, error) {
 func (r *UserResolver) EmoteSlots() int32 {
 	return r.v.GetEmoteSlots()
 }
+
+// Get user's folloer count
+func (r *UserResolver) FollowerCount() int32 {
+	count, err := api_proxy.GetTwitchFollowerCount(r.ctx, r.v.TwitchID)
+	if err != nil {
+		return 0
+	}
+
+	return count
+}
+
+// Get user's live broadcast, if any
+func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
+	var stream *datastructure.Broadcast
+	if streams, err := api_proxy.GetTwitchStreams(r.ctx, r.v.Login); err != nil {
+		return nil, err
+	} else if len(streams.Data) > 0 {
+		s := streams.Data[0]
+		stream = &datastructure.Broadcast{
+			ID:           s.ID,
+			Title:        s.Title,
+			ThumbnailURL: s.ThumbnailURL,
+			ViewerCount:  s.ViewerCount,
+			Type:         s.Type,
+			GameName:     s.GameName,
+			GameID:       s.GameID,
+			Language:     s.Language,
+			Tags:         s.TagIDs,
+			Mature:       s.IsMature,
+			StartedAt:    s.StartedAt.Format(time.RFC3339),
+			UserID:       s.UserID,
+		}
+	} else {
+		return nil, nil
+	}
+
+	return stream, nil
+}

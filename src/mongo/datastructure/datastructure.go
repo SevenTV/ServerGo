@@ -235,40 +235,6 @@ type Report struct {
 	AuditEntries *[]*AuditLog `json:"audit_entries" bson:"-"`
 }
 
-// const (
-// 	oldAuditLogTypeEmoteCreate int32 = 1
-// 	oldAuditLogTypeEmoteDelete int32 = iota
-// 	oldAuditLogTypeEmoteDisable
-// 	oldAuditLogTypeEmoteEdit
-// 	oldAuditLogTypeEmoteUndoDelete
-
-// 	oldAuditLogTypeAuthIn  int32 = 21
-// 	oldAuditLogTypeAuthOut int32 = iota
-
-// 	oldAuditLogTypeUserCreate int32 = 31
-// 	oldAuditLogTypeUserDelete int32 = iota
-// 	oldAuditLogTypeUserBan
-// 	oldAuditLogTypeUserEdit
-// 	oldAuditLogTypeUserChannelEmoteAdd
-// 	oldAuditLogTypeUserChannelEmoteRemove
-// 	oldAuditLogTypeUserUnban
-// 	oldAuditLogTypeUserChannelEditorAdd
-// 	oldAuditLogTypeUserChannelEditorRemove
-// 	oldAuditLogTypeUserChannelEmoteEdit
-
-// 	oldAuditLogTypeAppMaintenanceMode int32 = 51
-// 	oldAuditLogTypeAppRouteLock       int32 = iota
-// 	oldAuditLogTypeAppLogsView
-// 	oldAuditLogTypeAppScale
-// 	oldAuditLogTypeAppNodeCreate
-// 	oldAuditLogTypeAppNodeDelete
-// 	oldAuditLogTypeAppNodeJoin
-// 	oldAuditLogTypeAppNodeUnref
-
-// 	oldAuditLogTypeReport      int32 = 71
-// 	oldAuditLogTypeReportClear int32 = iota
-// )
-
 const (
 	// Emotes (1-19)
 	AuditLogTypeEmoteCreate     = 1
@@ -318,4 +284,19 @@ type Badge struct {
 type Meta struct {
 	Announcement      string `json:"announcement"`
 	FeaturedBroadcast string `json:"featured_broadcast"`
+}
+
+type Broadcast struct {
+	ID           string   `json:"id"`
+	Title        string   `json:"title"`
+	ThumbnailURL string   `json:"thumbnail_url"`
+	ViewerCount  int32    `json:"viewer_count"`
+	Type         string   `json:"type"`
+	GameName     string   `json:"game_name"`
+	GameID       string   `json:"game_id"`
+	Language     string   `json:"language"`
+	Tags         []string `json:"tags"`
+	Mature       bool     `json:"mature"`
+	StartedAt    string   `json:"started_at"`
+	UserID       string   `json:"user_id"`
 }

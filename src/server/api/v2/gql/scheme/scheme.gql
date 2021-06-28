@@ -214,6 +214,10 @@ type User {
   banned: Boolean!
   # Get the user's maximum channel emote slots
   emote_slots: Int!
+  # Get the user's follower count
+  follower_count: Int!
+  # Get the user's current live broadcast
+  broadcast: Broadcast
 }
 
 type UserPartial {
@@ -291,4 +295,19 @@ type Ban {
 type Meta {
   announcement: String!
   featured_broadcast: String!
+}
+
+type Broadcast {
+  id: String!
+  title: String!
+  thumbnail_url: String!
+  viewer_count: Int!
+  type: String!
+  game_name: String!
+  game_id: String!
+  language: String!
+  tags: [String!]!
+  mature: Boolean!
+  started_at: String!
+  user_id: String!
 }
