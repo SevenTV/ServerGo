@@ -288,10 +288,17 @@ func CacheGetRequest(ctx context.Context, uri string, cacheDuration time.Duratio
 		req.Header.Add(header.Key, header.Value)
 	}
 
+	startedAt := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	log.WithFields(log.Fields{
+		"status_code":    resp.StatusCode,
+		"status":         resp.Status,
+		"response_in_ms": time.Now().Sub(startedAt).Milliseconds(),
+		"completed_at":   time.Now(),
+	}).Info("CacheGetRequest")
 
 	// Read the body as byte slice
 	body, err := ioutil.ReadAll(resp.Body)
