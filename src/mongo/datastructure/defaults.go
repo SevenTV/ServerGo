@@ -12,6 +12,7 @@ var DefaultRole *Role = &Role{
 	Name:    "Default",
 	Allowed: configure.Config.GetInt64("default_permissions"),
 	Denied:  0,
+	Default: true,
 }
 
 var DeletedUser *User = &User{

@@ -136,12 +136,13 @@ func (u *User) HasPermission(flag int64) bool {
 }
 
 type Role struct {
-	ID       primitive.ObjectID  `json:"id" bson:"_id"`
-	Name     string              `json:"name" bson:"name"`
-	Position int32               `json:"position" bson:"position"`
-	Color    int32               `json:"color" bson:"color"`
-	Allowed  int64               `json:"allowed" bson:"allowed"`
-	Denied   int64               `json:"denied" bson:"denied"`
+	ID       primitive.ObjectID `json:"id" bson:"_id"`
+	Name     string             `json:"name" bson:"name"`
+	Position int32              `json:"position" bson:"position"`
+	Color    int32              `json:"color" bson:"color"`
+	Allowed  int64              `json:"allowed" bson:"allowed"`
+	Denied   int64              `json:"denied" bson:"denied"`
+	Default  bool
 	Badge    *primitive.ObjectID `json:"badge" bson:"badge"`
 }
 
