@@ -300,3 +300,37 @@ type Broadcast struct {
 	StartedAt    string   `json:"started_at"`
 	UserID       string   `json:"user_id"`
 }
+
+type Notification struct {
+	ID           primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
+	TargetUsers  []primitive.ObjectID `json:"target_users" bson:"target_users"` // The users who can see the notification
+	TargetRoles  []primitive.ObjectID `json:"target_roles" bson:"target_roles"` // The roles that can see the notification
+	Announcement bool                 `json:"announcement" bson:"announcement"` // If true, the notification is global and visible to all users regardless of targets
+
+	Content NotificationContent  `json:"content" bson:"content"` // The visual contents of the notification
+	ReadBy  []primitive.ObjectID `json:"read_by" bson:"read_by"` // The users who have read this notification
+}
+
+type NotificationContent struct {
+	Title        string                           `json:"title" bson:"title"`     // The notification's heading / title
+	MessageParts []NotificationContentMessagePart `json:"message" bson:"message"` // The parts making up the notification's formatted message
+}
+
+type NotificationContentMessagePart struct {
+	Type NotificationContentMessagePartType `json:"part_type" bson:"part_type"` // The type of this part
+	Data interface{}                        `json:"data" bson:"data"`           // The part's data
+
+	Text         string `json:"text" bson:"-"`          // Parse as text
+	UserMention  *User  `json:"user_mention" bson:"-"`  // Parse as a User
+	EmoteMention *Emote `json:"emote_mention" bson:"-"` // Parse as an Emote
+	RoleMention  *Role  `json:"role_mention" bson:"-"`  // Parse as a Role
+}
+
+const (
+	NotificationContentMessagePartTypeText NotificationContentMessagePartType = 1 + iota
+	NotificationContentMessagePartTypeUserMention
+	NotificationContentMessagePartTypeEmoteMention
+	NotificationContentMessagePartTypeRoleMention
+)
+
+type NotificationContentMessagePartType int8
