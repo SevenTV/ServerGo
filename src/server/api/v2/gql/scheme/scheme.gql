@@ -24,6 +24,8 @@ type Mutation {
   reportEmote(emote_id: String!, reason: String): Response
   # Report a user. Requires login.
   reportUser(user_id: String!, reason: String): Response
+  # Edit a user
+  editUser(user: UserInput!, reason: String): User
   # Ban a user. Requires permission.
   banUser(victim_id: String!, expire_at: String, reason: String): Response
   # Unban a user. Requires permission.
@@ -85,6 +87,13 @@ input EmoteInput {
   visibility: Int
   # tags for this emote
   tags: [String!]
+}
+
+input UserInput {
+  # ID of the user
+  id: String!
+  # User's Role ID
+  role_id: String
 }
 
 input ChannelEmoteInput {

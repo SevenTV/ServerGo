@@ -14,6 +14,7 @@ var (
 	ErrUnknownEmote          = fmt.Errorf("Unknown Emote")
 	ErrUnknownChannel        = fmt.Errorf("Unknown Channel")
 	ErrUnknownUser           = fmt.Errorf("Unknown User")
+	ErrUnknownRole           = fmt.Errorf("Unknown Role")
 	ErrAccessDenied          = fmt.Errorf("Insufficient Privilege")
 	ErrUserBanned            = fmt.Errorf("User Is Banned")
 	ErrUserNotBanned         = fmt.Errorf("User Is Not Banned")

@@ -14,3 +14,8 @@ type emoteInput struct {
 	Visibility *int32    `json:"visibility"`
 	Tags       *[]string `json:"tags"`
 }
+
+type userInput struct {
+	ID     string  `json:"id"`
+	RoleID *string `json:"role_id"`
+}
