@@ -94,6 +94,8 @@ input UserInput {
   id: String!
   # User's Role ID
   role_id: String
+  # User's allowed channel emote slots (0 = use default)
+  emote_slots: Int
 }
 
 input ChannelEmoteInput {

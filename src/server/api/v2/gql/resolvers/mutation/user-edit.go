@@ -3,6 +3,7 @@ package mutation_resolvers
 import (
 	"context"
 
+	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
@@ -80,6 +81,26 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 				NewValue: role.ID,
 			})
 		}
+	}
+
+	// Update: Channel Emote Slots
+	if req.EmoteSlots != nil {
+		slots := *req.EmoteSlots
+
+		// If amount of slots requested is higher than the configured default:
+		// Check actor can manage users
+		if slots > configure.Config.GetInt32("limits.meta.channel_emote_slots") {
+			if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
+				return nil, resolvers.ErrAccessDenied
+			}
+		}
+
+		update["emote_slots"] = slots
+		logChanges = append(logChanges, &datastructure.AuditLogChange{
+			Key:      "emote_slots",
+			OldValue: target.EmoteSlots,
+			NewValue: slots,
+		})
 	}
 
 	field, failed := query_resolvers.GenerateSelectedFieldMap(ctx, resolvers.MaxDepth)
