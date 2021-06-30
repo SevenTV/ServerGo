@@ -285,8 +285,9 @@ type Badge struct {
 }
 
 type Meta struct {
-	Announcement      string `json:"announcement"`
-	FeaturedBroadcast string `json:"featured_broadcast"`
+	Announcement      string   `json:"announcement"`
+	FeaturedBroadcast string   `json:"featured_broadcast"`
+	Roles             []string `json:"roles"`
 }
 
 type Broadcast struct {

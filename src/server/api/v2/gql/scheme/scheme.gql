@@ -68,7 +68,7 @@ type Query {
   # Get featured stream
   featured_broadcast(): String!
   # Get meta
-  meta(): Meta!
+  meta(): Meta
 }
 
 input EmoteFilter {
@@ -306,6 +306,7 @@ type Ban {
 type Meta {
   announcement: String!
   featured_broadcast: String!
+  roles: [String!]!
 }
 
 type Broadcast {

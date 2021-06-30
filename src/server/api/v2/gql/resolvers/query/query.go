@@ -9,6 +9,7 @@ import (
 
 	"github.com/SevenTV/ServerGo/src/cache"
 	"github.com/SevenTV/ServerGo/src/mongo"
+	mongocache "github.com/SevenTV/ServerGo/src/mongo/cache"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/redis"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
@@ -598,7 +599,6 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("No Featured Broadcast")
 	}
 
-	// test
 	stream, err := api_proxy.GetTwitchStreams(ctx, channel)
 	if err != nil {
 		log.WithError(err).WithField("channel", channel).Error("query could not get live status of featured broadcast")
@@ -612,7 +612,7 @@ func (*QueryResolver) FeaturedBroadcast(ctx context.Context) (string, error) {
 	return channel, nil
 }
 
-func (*QueryResolver) Meta(ctx context.Context) datastructure.Meta {
+func (*QueryResolver) Meta(ctx context.Context) (*datastructure.Meta, error) {
 	pipe := redis.Client.Pipeline()
 	announce := pipe.Get(ctx, "meta:announcement")
 	feat := pipe.Get(ctx, "meta:featured_broadcast")
@@ -623,8 +623,21 @@ func (*QueryResolver) Meta(ctx context.Context) datastructure.Meta {
 	if err := feat.Err(); err != nil && err != redis.ErrNil {
 		log.WithError(err).Error("redis")
 	}
-	return datastructure.Meta{
+
+	cachedRoles := mongocache.CachedRoles.([]datastructure.Role)
+	roles := []string{}
+	for _, r := range cachedRoles {
+		b, err := json.Marshal(r)
+		if err != nil {
+			continue
+		}
+
+		roles = append(roles, utils.B2S(b))
+	}
+
+	return &datastructure.Meta{
 		Announcement:      announce.Val(),
 		FeaturedBroadcast: feat.Val(),
-	}
+		Roles:             roles,
+	}, nil
 }
