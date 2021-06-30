@@ -72,6 +72,10 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 			if role.Default {
 				return nil, resolvers.ErrUnknownRole
 			}
+			// Make sure the target role isn't higher than the actor's role
+			if role.Position >= usr.Role.Position {
+				return nil, resolvers.ErrAccessDenied
+			}
 
 			// Update role
 			update["role"] = role.ID
