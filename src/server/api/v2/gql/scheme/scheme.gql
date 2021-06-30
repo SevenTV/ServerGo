@@ -72,7 +72,7 @@ type Query {
 }
 
 input EmoteFilter {
-  width_range: [Int]
+  width_range: [Int!]
   visibility: Int
 }
 

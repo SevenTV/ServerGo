@@ -298,8 +298,28 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 	}
 
 	if args.Filter != nil {
+		// Handle visibility filter
 		if args.Filter.Visibility != nil {
 			match["visibility"] = bson.M{"$bitsAllSet": *args.Filter.Visibility}
+		}
+
+		// Handle width range filter
+		if args.Filter.WidthRange != nil {
+			if len(*args.Filter.WidthRange) != 2 { // Error if the length wasn't 2
+				return nil, fmt.Errorf("filter.width_range must be a list with 2 integers, but the length given was %d", len(*args.Filter.WidthRange))
+			}
+
+			list := *args.Filter.WidthRange
+			min := list[0]
+			max := list[1]
+			if max < min {
+				return nil, fmt.Errorf("the max value cannot be smaller than the minimum value")
+			}
+
+			match["width.3"] = bson.M{
+				"$gte": min,
+				"$lte": max,
+			}
 		}
 	}
 
@@ -449,7 +469,7 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 }
 
 type EmoteSearchFilter struct {
-	WidthRange *[]*int16
+	WidthRange *[]int32
 	Visibility *int32
 }
 
