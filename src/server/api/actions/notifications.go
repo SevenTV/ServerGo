@@ -1,14 +1,73 @@
 package actions
 
 import (
+	"context"
+
+	"github.com/SevenTV/ServerGo/src/cache"
+	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type notifications struct{}
 
 type NotificationBuilder struct {
 	Notification datastructure.Notification
+}
+
+// Get the data of mentioned users in the notification's message parts
+func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (NotificationBuilder, error) {
+	var userIDs []primitive.ObjectID
+	for _, part := range b.Notification.Content.MessageParts { // Check message parts for user mentions
+		if part.Type != datastructure.NotificationContentMessagePartTypeUserMention {
+			continue
+		}
+		if part.Mention == nil {
+			continue
+		}
+
+		// Append unique user IDs to slice
+		mention := *part.Mention
+		if utils.ContainsObjectID(userIDs, mention) {
+			userIDs = append(userIDs, mention)
+		}
+	}
+
+	// Fetch user data
+	var users []*datastructure.User
+	if err := cache.Find(ctx, "users", "", bson.M{
+		"_id": bson.M{
+			"$in": userIDs,
+		},
+	}, users); err != nil {
+		return b, err
+	}
+
+	b.Notification.Content.Users = users
+	return b, nil
+}
+
+// Write the notification to database, creating it if it doesn't exist, or updating the existing one
+func (b NotificationBuilder) Write(ctx context.Context) error {
+	upsert := true
+
+	// Create new Object ID if this is a new notification
+	if b.Notification.ID.IsZero() {
+		b.Notification.ID = primitive.NewObjectID()
+	}
+
+	if _, err := mongo.Database.Collection("notifications").UpdateByID(ctx, b.Notification.ID, bson.M{
+		"$set": b.Notification,
+	}, &options.UpdateOptions{
+		Upsert: &upsert,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Set the Notification's Title
@@ -23,6 +82,36 @@ func (b NotificationBuilder) AddTextMessagePart(text string) NotificationBuilder
 	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
 		Type: datastructure.NotificationContentMessagePartTypeText,
 		Text: &text,
+	})
+
+	return b
+}
+
+// Append a User Mention to the notification
+func (b NotificationBuilder) AddUserMentionPart(user *primitive.ObjectID) NotificationBuilder {
+	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
+		Type:    datastructure.NotificationContentMessagePartTypeUserMention,
+		Mention: user,
+	})
+
+	return b
+}
+
+// Append a Emote Mention to the notification
+func (b NotificationBuilder) AddEmoteMentionPart(emote *primitive.ObjectID) NotificationBuilder {
+	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
+		Type:    datastructure.NotificationContentMessagePartTypeEmoteMention,
+		Mention: emote,
+	})
+
+	return b
+}
+
+// Append a Role Mention to the notification
+func (b NotificationBuilder) AddRoleMentionPart(role *primitive.ObjectID) NotificationBuilder {
+	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
+		Type:    datastructure.NotificationContentMessagePartTypeRoleMention,
+		Mention: role,
 	})
 
 	return b

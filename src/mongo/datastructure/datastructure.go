@@ -312,18 +312,18 @@ type Notification struct {
 }
 
 type NotificationContent struct {
-	Title        string                           `json:"title" bson:"title"`     // The notification's heading / title
-	MessageParts []NotificationContentMessagePart `json:"message" bson:"message"` // The parts making up the notification's formatted message
+	Title        string                           `json:"title" bson:"title"`                 // The notification's heading / title
+	MessageParts []NotificationContentMessagePart `json:"message_parts" bson:"message_parts"` // The parts making up the notification's formatted message
+
+	Users  []*User  `json:"users" bson:"-"`  // The users mentioned in this notification
+	Emotes []*Emote `json:"emotes" bson:"-"` // The emotesm entioned in this notification
 }
 
 type NotificationContentMessagePart struct {
 	Type NotificationContentMessagePartType `json:"part_type" bson:"part_type"` // The type of this part
-	Data interface{}                        `json:"data" bson:"data"`           // The part's data
 
-	Text         string `json:"text" bson:"-"`          // Parse as text
-	UserMention  *User  `json:"user_mention" bson:"-"`  // Parse as a User
-	EmoteMention *Emote `json:"emote_mention" bson:"-"` // Parse as an Emote
-	RoleMention  *Role  `json:"role_mention" bson:"-"`  // Parse as a Role
+	Text    *string             `json:"text" bson:"text"`
+	Mention *primitive.ObjectID `json:"mention" bson:"mention"`
 }
 
 const (
