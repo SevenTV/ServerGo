@@ -149,7 +149,15 @@ func (b NotificationBuilder) SetReadBy(userIDs ...primitive.ObjectID) Notificati
 // Get a NotificationBuilder
 func (*notifications) Create() NotificationBuilder {
 	builder := NotificationBuilder{
-		Notification: datastructure.Notification{},
+		Notification: datastructure.Notification{
+			ReadBy:      []primitive.ObjectID{},
+			TargetUsers: []primitive.ObjectID{},
+			TargetRoles: []primitive.ObjectID{},
+			Content: datastructure.NotificationContent{
+				Title:        "System Message",
+				MessageParts: []datastructure.NotificationContentMessagePart{},
+			},
+		},
 	}
 
 	return builder
