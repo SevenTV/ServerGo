@@ -50,14 +50,7 @@ func CreateEmoteResponse(emote *datastructure.Emote, owner *datastructure.User) 
 	}
 
 	// Generate simple visibility value
-	simpleVis := []string{}
-	for vis, s := range emoteVisibilitySimpleMap {
-		if !utils.BitField.HasBits(int64(emote.Visibility), int64(vis)) {
-			continue
-		}
-
-		simpleVis = append(simpleVis, s)
-	}
+	simpleVis := emote.GetSimpleVisibility()
 
 	// Create the final response
 	response := EmoteResponse{
@@ -78,16 +71,6 @@ func CreateEmoteResponse(emote *datastructure.Emote, owner *datastructure.User) 
 	}
 
 	return response
-}
-
-var emoteVisibilitySimpleMap = map[int32]string{
-	datastructure.EmoteVisibilityPrivate:                  "PRIVATE",
-	datastructure.EmoteVisibilityGlobal:                   "GLOBAL",
-	datastructure.EmoteVisibilityUnlisted:                 "UNLISTED",
-	datastructure.EmoteVisibilityOverrideFFZ:              "OVERRIDE_FFZ",
-	datastructure.EmoteVisibilityOverrideBTTV:             "OVERRIDE_BTTV",
-	datastructure.EmoteVisibilityOverrideTwitchSubscriber: "OVERRIDE_TWITCH_SUBSCRIBER",
-	datastructure.EmoteVisibilityOverrideTwitchGlobal:     "OVERRIDE_TWITCH_GLOBAL",
 }
 
 type EmoteResponse struct {

@@ -65,6 +65,29 @@ const (
 	EmoteVisibilityAll int32 = (1 << iota) - 1
 )
 
+var EmoteVisibilitySimpleMap = map[int32]string{
+	EmoteVisibilityPrivate:                  "PRIVATE",
+	EmoteVisibilityGlobal:                   "GLOBAL",
+	EmoteVisibilityUnlisted:                 "UNLISTED",
+	EmoteVisibilityOverrideFFZ:              "OVERRIDE_FFZ",
+	EmoteVisibilityOverrideBTTV:             "OVERRIDE_BTTV",
+	EmoteVisibilityOverrideTwitchSubscriber: "OVERRIDE_TWITCH_SUBSCRIBER",
+	EmoteVisibilityOverrideTwitchGlobal:     "OVERRIDE_TWITCH_GLOBAL",
+}
+
+func (e *Emote) GetSimpleVisibility() []string {
+	simpleVis := []string{}
+	for vis, s := range EmoteVisibilitySimpleMap {
+		if !utils.BitField.HasBits(int64(e.Visibility), int64(vis)) {
+			continue
+		}
+
+		simpleVis = append(simpleVis, s)
+	}
+
+	return simpleVis
+}
+
 const (
 	EmoteStatusDeleted int32 = iota - 1
 	EmoteStatusProcessing
