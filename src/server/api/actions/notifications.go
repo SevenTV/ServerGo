@@ -7,6 +7,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/utils"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -64,6 +65,7 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 	}, &options.UpdateOptions{
 		Upsert: &upsert,
 	}); err != nil {
+		log.WithError(err).Error("mongo")
 		return err
 	}
 
@@ -88,30 +90,30 @@ func (b NotificationBuilder) AddTextMessagePart(text string) NotificationBuilder
 }
 
 // Append a User Mention to the notification
-func (b NotificationBuilder) AddUserMentionPart(user *primitive.ObjectID) NotificationBuilder {
+func (b NotificationBuilder) AddUserMentionPart(user primitive.ObjectID) NotificationBuilder {
 	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
 		Type:    datastructure.NotificationContentMessagePartTypeUserMention,
-		Mention: user,
+		Mention: &user,
 	})
 
 	return b
 }
 
 // Append a Emote Mention to the notification
-func (b NotificationBuilder) AddEmoteMentionPart(emote *primitive.ObjectID) NotificationBuilder {
+func (b NotificationBuilder) AddEmoteMentionPart(emote primitive.ObjectID) NotificationBuilder {
 	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
 		Type:    datastructure.NotificationContentMessagePartTypeEmoteMention,
-		Mention: emote,
+		Mention: &emote,
 	})
 
 	return b
 }
 
 // Append a Role Mention to the notification
-func (b NotificationBuilder) AddRoleMentionPart(role *primitive.ObjectID) NotificationBuilder {
+func (b NotificationBuilder) AddRoleMentionPart(role primitive.ObjectID) NotificationBuilder {
 	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
 		Type:    datastructure.NotificationContentMessagePartTypeRoleMention,
-		Mention: role,
+		Mention: &role,
 	})
 
 	return b
@@ -171,3 +173,5 @@ func (*notifications) CreateFrom(notification datastructure.Notification) Notifi
 
 	return builder
 }
+
+var Notifications notifications = notifications{}
