@@ -116,6 +116,13 @@ func init() {
 		log.WithError(err).Fatal("mongo")
 	}
 
+	_, err = Database.Collection("notifications").Indexes().CreateMany(ctx, []mongo.IndexModel{
+		{Keys: bson.M{"target_users": 1}},
+		{Keys: bson.M{"target_roles": 1}},
+		{Keys: bson.M{"content.title": 1}},
+		{Keys: bson.M{"content.message_parts.mention": 1}},
+	})
+
 	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
 
 	for _, v := range []string{"users", "emotes", "bans", "reports", "audit"} {
