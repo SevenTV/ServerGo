@@ -7,6 +7,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	query_resolvers "github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers/query"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -163,6 +164,7 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 	if len(logChanges) > 0 {
 		update["last_modified_date"] = time.Now()
 
+		oldVisibility := emote.Visibility
 		after := options.After
 		doc := mongo.Database.Collection("emotes").FindOneAndUpdate(ctx, bson.M{
 			"_id": id,
@@ -191,6 +193,26 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 
 		if err != nil {
 			log.WithError(err).Error("mongo")
+		}
+
+		// Send a notification to the emote owner if another user removed the UNLISTED flag
+		if usr.ID.Hex() != emote.OwnerID.Hex() {
+			wasUnlisted := utils.BitField.HasBits(int64(oldVisibility), int64(datastructure.EmoteVisibilityUnlisted)) &&
+				!utils.BitField.HasBits(int64(emote.Visibility), int64(datastructure.EmoteVisibilityUnlisted))
+
+			if req.Visibility != nil && wasUnlisted {
+				notification := actions.Notifications.Create().
+					SetTitle("Emote Approved").
+					AddTargetUsers(emote.OwnerID).
+					AddTextMessagePart("Your emote ").
+					AddEmoteMentionPart(emote.ID).
+					AddTextMessagePart("was approved by ").
+					AddUserMentionPart(usr.ID).
+					AddTextMessagePart("!")
+
+				go notification.Write(ctx)
+			}
+
 		}
 
 		go discord.SendEmoteEdit(*emote, *usr, logChanges, args.Reason)

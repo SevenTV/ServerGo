@@ -11,6 +11,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	"github.com/SevenTV/ServerGo/src/utils"
 	log "github.com/sirupsen/logrus"
@@ -128,6 +129,20 @@ func (*MutationResolver) DeleteEmote(ctx context.Context, args struct {
 	}
 
 	wg.Wait()
+
+	// Send a notification to the emote owner if it was deleted by a user other than themselve
+	if usr.ID.Hex() != emote.OwnerID.Hex() {
+		notification := actions.Notifications.Create().
+			SetTitle("Emote Deleted").
+			AddTargetUsers(emote.OwnerID).
+			AddTextMessagePart("Your emote ").
+			AddEmoteMentionPart(emote.ID).
+			AddTextMessagePart("was deleted by ").
+			AddUserMentionPart(usr.ID).
+			AddTextMessagePart(fmt.Sprintf("with the reason: \"%v\".", utils.Ternary(args.Reason != "", args.Reason, "no reason")))
+
+		go notification.Write(ctx) // Send the notification
+	}
 
 	go discord.SendEmoteDelete(*emote, *usr, args.Reason)
 	success = true
