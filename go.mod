@@ -39,6 +39,6 @@ require (
 	gopkg.in/gographics/imagick.v3 v3.4.0
 )
 
-replace github.com/graph-gophers/graphql-go => github.com/troydota/graphql-go v0.0.0-20210513105700-d1faf5042c4f
+replace github.com/graph-gophers/graphql-go => github.com/troydota/graphql-go v0.0.0-20210702180404-92fc941a47cf
 
-replace github.com/gofiber/fiber/v2 => github.com/SevenTV/fiber/v2 v2.6.1-0.20210513111059-44313cd6b916
+replace github.com/gofiber/fiber/v2 => github.com/troydota/fiber/v2 v2.6.1-0.20210702175935-00374300a53b

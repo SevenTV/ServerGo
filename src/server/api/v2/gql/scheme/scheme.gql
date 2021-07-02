@@ -24,6 +24,8 @@ type Mutation {
   reportEmote(emote_id: String!, reason: String): Response
   # Report a user. Requires login.
   reportUser(user_id: String!, reason: String): Response
+  # Edit a user
+  editUser(user: UserInput!, reason: String): User
   # Ban a user. Requires permission.
   banUser(victim_id: String!, expire_at: String, reason: String): Response
   # Unban a user. Requires permission.
@@ -66,11 +68,11 @@ type Query {
   # Get featured stream
   featured_broadcast(): String!
   # Get meta
-  meta(): Meta!
+  meta(): Meta
 }
 
 input EmoteFilter {
-  width_range: [Int]
+  width_range: [Int!]
   visibility: Int
 }
 
@@ -85,6 +87,15 @@ input EmoteInput {
   visibility: Int
   # tags for this emote
   tags: [String!]
+}
+
+input UserInput {
+  # ID of the user
+  id: String!
+  # User's Role ID
+  role_id: String
+  # User's allowed channel emote slots (0 = use default)
+  emote_slots: Int
 }
 
 input ChannelEmoteInput {
@@ -297,6 +308,7 @@ type Ban {
 type Meta {
   announcement: String!
   featured_broadcast: String!
+  roles: [String!]!
 }
 
 type Broadcast {

@@ -137,7 +137,8 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 	}
 	if req.Visibility != nil {
 		if !usr.HasPermission(datastructure.RolePermissionEmoteEditAll) {
-			if utils.BitField.HasBits(int64(*req.Visibility), int64(datastructure.EmoteVisibilityGlobal)) {
+			// User tries to make the emote global but lacks permission
+			if utils.BitField.HasBits(int64(*req.Visibility), int64(datastructure.EmoteVisibilityGlobal)) && !usr.HasPermission(datastructure.RolePermissionEditEmoteGlobalState) {
 				return nil, resolvers.ErrAccessDenied // User tries to set emote's global state but lacks permission
 			}
 
