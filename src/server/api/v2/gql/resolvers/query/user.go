@@ -3,12 +3,14 @@ package query_resolvers
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/SevenTV/ServerGo/src/cache"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/redis"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	api_proxy "github.com/SevenTV/ServerGo/src/server/api/v2/proxy"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -536,4 +538,129 @@ func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
 	}
 
 	return stream, nil
+}
+
+func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
+	// Find notifications readable by this user
+	var data []*datastructure.Notification
+	cur, err := mongo.Database.Collection("notifications").Find(r.ctx, bson.M{
+		"target_users": bson.M{
+			"$in": []primitive.ObjectID{r.v.ID},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := cur.All(r.ctx, &data); err != nil {
+		return nil, err
+	}
+	// Transform all notifications to builders
+	notifications := make([]actions.NotificationBuilder, len(data))
+	for i, n := range data {
+		if n == nil {
+			continue
+		}
+
+		notifications[i] = actions.Notifications.CreateFrom(*n)
+	}
+
+	var mentionedUserIDs []primitive.ObjectID
+	var mentionedUsers []*datastructure.User
+	var mentionedEmoteIDs []primitive.ObjectID
+	var mentionedEmotes []*datastructure.Emote
+
+	resolvers := make([]*notificationResolver, len(notifications))
+	innerLock := sync.Mutex{}
+	innerWg := sync.WaitGroup{}
+	outerLock := sync.Mutex{}
+
+	firstIter := true
+	innerWg.Add(len(notifications))
+	outerLock.Lock()
+	for i, n := range notifications {
+		n, uIds := n.GetMentionedUsers(r.ctx)
+		n, eIds := n.GetMentionedEmotes(r.ctx)
+		for k := range uIds {
+			if utils.ContainsObjectID(mentionedUserIDs, k) {
+				continue
+			}
+
+			mentionedUserIDs = append(mentionedUserIDs, k)
+		}
+		for k := range eIds {
+			if utils.ContainsObjectID(mentionedEmoteIDs, k) {
+				continue
+			}
+
+			mentionedEmoteIDs = append(mentionedEmoteIDs, k)
+		}
+
+		// Wait for the user IDs to become available
+		// then, execute goroutine to find all users
+		go func(index int) {
+			innerLock.Lock() // Prevent further executions until the fetching is done
+
+			// Fetch all mentions
+			// This happens one time only
+			shouldUnlock := false
+			if firstIter {
+				if len(mentionedUserIDs) > 0 {
+					if err := cache.Find(r.ctx, "users", "", bson.M{
+						"_id": bson.M{
+							"$in": mentionedUserIDs,
+						},
+					}, &mentionedUsers); err != nil {
+						log.WithError(err).Error("mongo")
+					}
+				}
+				if len(mentionedEmoteIDs) > 0 {
+					if err := cache.Find(r.ctx, "emotes", "", bson.M{
+						"_id": bson.M{
+							"$in": mentionedEmoteIDs,
+						},
+					}, &mentionedEmotes); err != nil {
+						log.WithError(err).Error("mongo")
+					}
+				}
+
+				shouldUnlock = true
+				firstIter = false
+			}
+
+			// Add fetched users to notification struct
+			for _, u := range mentionedUsers {
+				if !utils.ContainsObjectID(n.MentionedUsers, u.ID) {
+					continue
+				}
+
+				n.Notification.Content.Users = append(n.Notification.Content.Users, u)
+			}
+			for _, e := range mentionedEmotes {
+				if !utils.ContainsObjectID(n.MentionedEmotes, e.ID) {
+					continue
+				}
+
+				n.Notification.Content.Emotes = append(n.Notification.Content.Emotes, e)
+			}
+
+			// Generate resolvers for the current notification
+			resolver, err := GenerateNotificationResolver(r.ctx, &n.Notification, r.fields)
+			if err != nil {
+				log.WithError(err).Error("GenerateNotificationResolver")
+				return
+			}
+			resolvers[index] = resolver
+
+			// Keep going
+			innerLock.Unlock()
+			innerWg.Done()
+			innerWg.Wait()
+			if shouldUnlock { // If this goroutine fetched the data we release the outer lock
+				outerLock.Unlock()
+			}
+		}(i)
+	}
+	outerLock.Lock()
+
+	return resolvers, nil
 }

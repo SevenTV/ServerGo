@@ -3,10 +3,8 @@ package actions
 import (
 	"context"
 
-	"github.com/SevenTV/ServerGo/src/cache"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
-	"github.com/SevenTV/ServerGo/src/utils"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,12 +14,15 @@ import (
 type notifications struct{}
 
 type NotificationBuilder struct {
-	Notification datastructure.Notification
+	Notification    datastructure.Notification
+	MentionedUsers  []primitive.ObjectID
+	MentionedEmotes []primitive.ObjectID
+	MentionedRoles  []primitive.ObjectID
 }
 
 // Get the data of mentioned users in the notification's message parts
-func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (NotificationBuilder, error) {
-	var userIDs []primitive.ObjectID
+func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (NotificationBuilder, map[primitive.ObjectID]bool) {
+	userIDs := make(map[primitive.ObjectID]bool)
 	for _, part := range b.Notification.Content.MessageParts { // Check message parts for user mentions
 		if part.Type != datastructure.NotificationContentMessagePartTypeUserMention {
 			continue
@@ -32,23 +33,33 @@ func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (Notificatio
 
 		// Append unique user IDs to slice
 		mention := *part.Mention
-		if utils.ContainsObjectID(userIDs, mention) {
-			userIDs = append(userIDs, mention)
+		if _, ok := userIDs[mention]; !ok {
+			userIDs[mention] = true
+			b.MentionedUsers = append(b.MentionedUsers, mention)
 		}
 	}
+	return b, userIDs
+}
 
-	// Fetch user data
-	var users []*datastructure.User
-	if err := cache.Find(ctx, "users", "", bson.M{
-		"_id": bson.M{
-			"$in": userIDs,
-		},
-	}, users); err != nil {
-		return b, err
+// Get the data of mentioned emotes in the notification's message parts
+func (b NotificationBuilder) GetMentionedEmotes(ctx context.Context) (NotificationBuilder, map[primitive.ObjectID]bool) {
+	emoteIDs := make(map[primitive.ObjectID]bool)
+	for _, part := range b.Notification.Content.MessageParts { // Check message parts for emote mentions
+		if part.Type != datastructure.NotificationContentMessagePartTypeEmoteMention {
+			continue
+		}
+		if part.Mention == nil {
+			continue
+		}
+
+		// Append unique user IDs to slice
+		mention := *part.Mention
+		if _, ok := emoteIDs[mention]; !ok {
+			emoteIDs[mention] = true
+			b.MentionedEmotes = append(b.MentionedEmotes, mention)
+		}
 	}
-
-	b.Notification.Content.Users = users
-	return b, nil
+	return b, emoteIDs
 }
 
 // Write the notification to database, creating it if it doesn't exist, or updating the existing one
