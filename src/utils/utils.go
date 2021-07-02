@@ -144,7 +144,7 @@ func Contains(s []string, compare string) bool {
 
 func ContainsObjectID(oid []primitive.ObjectID, compare primitive.ObjectID) bool {
 	for _, v := range oid {
-		if v.String() == compare.String() {
+		if v == compare {
 			return true
 		}
 	}
