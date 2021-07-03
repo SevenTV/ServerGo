@@ -340,6 +340,8 @@ type Notification {
   users: [UserPartial]!
   # The emotes mentioned in this notification
   emotes: [Emote]!
+  # Whether the notification has been read
+  read: Boolean!
 }
 
 type NotificationMessagePart {

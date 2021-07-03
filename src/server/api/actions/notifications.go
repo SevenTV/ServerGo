@@ -94,6 +94,7 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 			readStates[i] = rs
 		}
 
+		// Write the read states to database
 		if _, err := mongo.Database.Collection("notifications_read").InsertMany(ctx, readStates); err != nil {
 			log.WithError(err).Error("mongo")
 		}

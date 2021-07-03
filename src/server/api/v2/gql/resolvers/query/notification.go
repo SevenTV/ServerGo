@@ -99,6 +99,10 @@ func (r *notificationResolver) Emotes() ([]*EmoteResolver, error) {
 	return resolvers, nil
 }
 
+func (r *notificationResolver) Read() bool {
+	return r.v.Read
+}
+
 type messagePart struct {
 	Type int32  `json:"type"`
 	Data string `json:"data"`

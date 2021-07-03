@@ -543,17 +543,54 @@ func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
 func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 	// Find notifications readable by this user
 	var data []*datastructure.Notification
-	cur, err := mongo.Database.Collection("notifications").Find(r.ctx, bson.M{
-		"target_users": bson.M{
-			"$in": []primitive.ObjectID{r.v.ID},
+
+	pipeline := mongo.Pipeline{
+		bson.D{ // Step 1: Match only readstates where the target is the user
+			bson.E{
+				Key: "$match",
+				Value: bson.M{
+					"target": r.v.ID,
+				},
+			},
 		},
-	})
+		bson.D{ // Step 2: Find the target notification from the other collection
+			bson.E{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "notifications", // Target the collection containing notification data
+					"localField":   "notification",  // Use the notification field, which is the ID of the notification
+					"foreignField": "_id",           // Match with foreign collection's ObjectID
+					"as":           "notification",  // Output as "notification" field
+				},
+			},
+		},
+		bson.D{ // Step 3: Unwind the array of notifications (but this is ID match, therefore there is only 1)
+			bson.E{
+				Key:   "$unwind",
+				Value: "$notification",
+			},
+		},
+		bson.D{ // Step 4: Add the "read" field from the notification read state into the notification object
+			bson.E{
+				Key:   "$addFields",
+				Value: bson.M{"notification.read": "$read"},
+			},
+		},
+		bson.D{ // Step 5: Replace the root input with the notification that now has the readstate information :tf:
+			bson.E{
+				Key:   "$replaceWith",
+				Value: "$notification",
+			},
+		},
+	}
+	cur, err := mongo.Database.Collection("notifications_read").Aggregate(r.ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
 	if err := cur.All(r.ctx, &data); err != nil {
 		return nil, err
 	}
+
 	// Transform all notifications to builders
 	notifications := make([]actions.NotificationBuilder, len(data))
 	for i, n := range data {
@@ -570,6 +607,10 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 	var mentionedEmotes []*datastructure.Emote
 
 	resolvers := make([]*notificationResolver, len(notifications))
+	if len(resolvers) == 0 {
+		return resolvers, nil
+	}
+
 	innerLock := sync.Mutex{}
 	innerWg := sync.WaitGroup{}
 	outerLock := sync.Mutex{}
@@ -581,14 +622,14 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 		n, uIds := n.GetMentionedUsers(r.ctx)
 		n, eIds := n.GetMentionedEmotes(r.ctx)
 		for k := range uIds {
-			if utils.ContainsObjectID(mentionedUserIDs, k) {
+			if utils.ContainsObjectID(mentionedUserIDs, k) { // Skip if the user is already added to mentions
 				continue
 			}
 
 			mentionedUserIDs = append(mentionedUserIDs, k)
 		}
 		for k := range eIds {
-			if utils.ContainsObjectID(mentionedEmoteIDs, k) {
+			if utils.ContainsObjectID(mentionedEmoteIDs, k) { // Skip if the emote is already added to mentions
 				continue
 			}
 
