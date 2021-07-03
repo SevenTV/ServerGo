@@ -350,7 +350,7 @@ type NotificationReadState struct {
 	TargetUser   primitive.ObjectID `json:"target" bson:"target"`                // The user targeted to see the notification
 	Notification primitive.ObjectID `json:"notification_id" bson:"notification"` // The notification that can be read
 	Read         bool               `json:"read" bson:"read"`                    // Whether the user read the notification
-	ReadAt       time.Time          `json:"read_at" bson:"read_at"`              // When the notification was read
+	ReadAt       *time.Time         `json:"read_at" bson:"read_at"`              // When the notification was read
 }
 
 const (

@@ -116,12 +116,7 @@ func init() {
 		log.WithError(err).Fatal("mongo")
 	}
 
-	_, err = Database.Collection("notifications").Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{Keys: bson.M{"target_users": 1}},
-		{Keys: bson.M{"target_roles": 1}},
-		{Keys: bson.M{"content.title": 1}},
-		{Keys: bson.M{"content.message_parts.mention": 1}},
-	})
+	_, err = Database.Collection("notifications").Indexes().CreateMany(ctx, []mongo.IndexModel{})
 	_, err = Database.Collection("notifications_read").Indexes().CreateMany(ctx, []mongo.IndexModel{})
 
 	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)

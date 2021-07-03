@@ -72,13 +72,31 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 		b.Notification.ID = primitive.NewObjectID()
 	}
 
-	if _, err := mongo.Database.Collection("notifications").UpdateByID(ctx, b.Notification.ID, bson.M{
+	// Write the notification
+	if d, err := mongo.Database.Collection("notifications").UpdateByID(ctx, b.Notification.ID, bson.M{
 		"$set": b.Notification,
 	}, &options.UpdateOptions{
 		Upsert: &upsert,
 	}); err != nil {
 		log.WithError(err).Error("mongo")
 		return err
+	} else {
+		id := d.UpsertedID.(primitive.ObjectID) // Get the ID of the created notification
+
+		// Create notification read states target users
+		readStates := make([]interface{}, len(b.TargetUsers))
+		for i, u := range b.TargetUsers {
+			rs := datastructure.NotificationReadState{
+				TargetUser:   u,
+				Notification: id,
+			}
+
+			readStates[i] = rs
+		}
+
+		if _, err := mongo.Database.Collection("notifications_read").InsertMany(ctx, readStates); err != nil {
+			log.WithError(err).Error("mongo")
+		}
 	}
 
 	return nil
