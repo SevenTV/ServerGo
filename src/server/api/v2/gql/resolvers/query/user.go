@@ -3,7 +3,6 @@ package query_resolvers
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/SevenTV/ServerGo/src/cache"
@@ -606,18 +605,11 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 	var mentionedEmoteIDs []primitive.ObjectID
 	var mentionedEmotes []*datastructure.Emote
 
-	resolvers := make([]*notificationResolver, len(notifications))
-	if len(resolvers) == 0 {
+	resolvers := []*notificationResolver{}
+	if len(notifications) == 0 {
 		return resolvers, nil
 	}
 
-	innerLock := sync.Mutex{}
-	innerWg := sync.WaitGroup{}
-	outerLock := sync.Mutex{}
-
-	firstIter := true
-	innerWg.Add(len(notifications))
-	outerLock.Lock()
 	for i, n := range notifications {
 		n, uIds := n.GetMentionedUsers(r.ctx)
 		n, eIds := n.GetMentionedEmotes(r.ctx)
@@ -625,83 +617,57 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 			if utils.ContainsObjectID(mentionedUserIDs, k) { // Skip if the user is already added to mentions
 				continue
 			}
-
 			mentionedUserIDs = append(mentionedUserIDs, k)
 		}
 		for k := range eIds {
 			if utils.ContainsObjectID(mentionedEmoteIDs, k) { // Skip if the emote is already added to mentions
 				continue
 			}
-
 			mentionedEmoteIDs = append(mentionedEmoteIDs, k)
 		}
-
-		// Wait for the user IDs to become available
-		// then, execute goroutine to find all users
-		go func(index int) {
-			innerLock.Lock() // Prevent further executions until the fetching is done
-
-			// Fetch all mentions
-			// This happens one time only
-			shouldUnlock := false
-			if firstIter {
-				if len(mentionedUserIDs) > 0 {
-					if err := cache.Find(r.ctx, "users", "", bson.M{
-						"_id": bson.M{
-							"$in": mentionedUserIDs,
-						},
-					}, &mentionedUsers); err != nil {
-						log.WithError(err).Error("mongo")
-					}
-				}
-				if len(mentionedEmoteIDs) > 0 {
-					if err := cache.Find(r.ctx, "emotes", "", bson.M{
-						"_id": bson.M{
-							"$in": mentionedEmoteIDs,
-						},
-					}, &mentionedEmotes); err != nil {
-						log.WithError(err).Error("mongo")
-					}
-				}
-
-				shouldUnlock = true
-				firstIter = false
-			}
-
-			// Add fetched users to notification struct
-			for _, u := range mentionedUsers {
-				if !utils.ContainsObjectID(n.MentionedUsers, u.ID) {
-					continue
-				}
-
-				n.Notification.Users = append(n.Notification.Users, u)
-			}
-			for _, e := range mentionedEmotes {
-				if !utils.ContainsObjectID(n.MentionedEmotes, e.ID) {
-					continue
-				}
-
-				n.Notification.Emotes = append(n.Notification.Emotes, e)
-			}
-
-			// Generate resolvers for the current notification
-			resolver, err := GenerateNotificationResolver(r.ctx, &n.Notification, r.fields)
-			if err != nil {
-				log.WithError(err).Error("GenerateNotificationResolver")
-				return
-			}
-			resolvers[index] = resolver
-
-			// Keep going
-			innerLock.Unlock()
-			innerWg.Done()
-			innerWg.Wait()
-			if shouldUnlock { // If this goroutine fetched the data we release the outer lock
-				outerLock.Unlock()
-			}
-		}(i)
+		notifications[i] = n
 	}
-	outerLock.Lock()
+
+	if len(mentionedUserIDs) > 0 {
+		if err := cache.Find(r.ctx, "users", "", bson.M{
+			"_id": bson.M{
+				"$in": mentionedUserIDs,
+			},
+		}, &mentionedUsers); err != nil {
+			log.WithError(err).Error("mongo")
+		}
+	}
+	if len(mentionedEmoteIDs) > 0 {
+		if err := cache.Find(r.ctx, "emotes", "", bson.M{
+			"_id": bson.M{
+				"$in": mentionedEmoteIDs,
+			},
+		}, &mentionedEmotes); err != nil {
+			log.WithError(err).Error("mongo")
+		}
+	}
+
+	for _, n := range notifications {
+		for _, u := range mentionedUsers {
+			if !utils.ContainsObjectID(n.MentionedUsers, u.ID) {
+				continue
+			}
+			n.Notification.Users = append(n.Notification.Users, u)
+		}
+		for _, e := range mentionedEmotes {
+			if !utils.ContainsObjectID(n.MentionedEmotes, e.ID) {
+				continue
+			}
+			n.Notification.Emotes = append(n.Notification.Emotes, e)
+		}
+
+		resolver, err := GenerateNotificationResolver(r.ctx, &n.Notification, r.fields)
+		if err != nil {
+			log.WithError(err).Error("GenerateNotificationResolver")
+			continue
+		}
+		resolvers = append(resolvers, resolver)
+	}
 
 	return resolvers, nil
 }
