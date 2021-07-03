@@ -591,41 +591,47 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 	}
 
 	// Transform all notifications to builders
-	notifications := make([]actions.NotificationBuilder, len(data))
-	for i, n := range data {
+	notifications := []actions.NotificationBuilder{}
+	for _, n := range data {
 		if n == nil {
 			continue
 		}
 
-		notifications[i] = actions.Notifications.CreateFrom(*n)
+		notifications = append(notifications, actions.Notifications.CreateFrom(*n))
 	}
 
-	var mentionedUserIDs []primitive.ObjectID
-	var mentionedUsers []*datastructure.User
-	var mentionedEmoteIDs []primitive.ObjectID
-	var mentionedEmotes []*datastructure.Emote
+	if len(notifications) == 0 {
+		return []*notificationResolver{}, nil
+	}
+
+	var (
+		mentionedUserIDs  []primitive.ObjectID
+		mentionedUsers    []*datastructure.User
+		mentionedEmoteIDs []primitive.ObjectID
+		mentionedEmotes   []*datastructure.Emote
+		tempmap           map[primitive.ObjectID]bool
+	)
 
 	resolvers := []*notificationResolver{}
-	if len(notifications) == 0 {
-		return resolvers, nil
-	}
+
+	newNotifications := make([]actions.NotificationBuilder, len(notifications))
 
 	for i, n := range notifications {
-		n, uIds := n.GetMentionedUsers(r.ctx)
-		n, eIds := n.GetMentionedEmotes(r.ctx)
-		for k := range uIds {
+		n, tempmap = n.GetMentionedUsers(r.ctx)
+		for k := range tempmap {
 			if utils.ContainsObjectID(mentionedUserIDs, k) { // Skip if the user is already added to mentions
 				continue
 			}
 			mentionedUserIDs = append(mentionedUserIDs, k)
 		}
-		for k := range eIds {
+		n, tempmap = n.GetMentionedEmotes(r.ctx)
+		for k := range tempmap {
 			if utils.ContainsObjectID(mentionedEmoteIDs, k) { // Skip if the emote is already added to mentions
 				continue
 			}
 			mentionedEmoteIDs = append(mentionedEmoteIDs, k)
 		}
-		notifications[i] = n
+		newNotifications[i] = n
 	}
 
 	if len(mentionedUserIDs) > 0 {
@@ -647,7 +653,7 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 		}
 	}
 
-	for _, n := range notifications {
+	for _, n := range newNotifications {
 		for _, u := range mentionedUsers {
 			if !utils.ContainsObjectID(n.MentionedUsers, u.ID) {
 				continue
