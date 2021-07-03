@@ -610,11 +610,8 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 		mentionedEmoteIDs []primitive.ObjectID
 		mentionedEmotes   []*datastructure.Emote
 		tempmap           map[primitive.ObjectID]bool
+		resolvers         = []*notificationResolver{}
 	)
-
-	resolvers := []*notificationResolver{}
-
-	newNotifications := make([]actions.NotificationBuilder, len(notifications))
 
 	for i, n := range notifications {
 		n, tempmap = n.GetMentionedUsers(r.ctx)
@@ -631,7 +628,7 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 			}
 			mentionedEmoteIDs = append(mentionedEmoteIDs, k)
 		}
-		newNotifications[i] = n
+		notifications[i] = n
 	}
 
 	if len(mentionedUserIDs) > 0 {
@@ -653,7 +650,7 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 		}
 	}
 
-	for _, n := range newNotifications {
+	for _, n := range notifications {
 		for _, u := range mentionedUsers {
 			if !utils.ContainsObjectID(n.MentionedUsers, u.ID) {
 				continue
@@ -667,7 +664,8 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 			n.Notification.Emotes = append(n.Notification.Emotes, e)
 		}
 
-		resolver, err := GenerateNotificationResolver(r.ctx, &n.Notification, r.fields)
+		notify := n.Notification
+		resolver, err := GenerateNotificationResolver(r.ctx, &notify, r.fields)
 		if err != nil {
 			log.WithError(err).Error("GenerateNotificationResolver")
 			continue
