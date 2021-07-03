@@ -30,6 +30,8 @@ type Mutation {
   banUser(victim_id: String!, expire_at: String, reason: String): Response
   # Unban a user. Requires permission.
   unbanUser(victim_id: String!, reason: String): Response
+  # Mark a notification as read
+  markNotificationsRead(notification_ids: [String!]!): Response
 }
 
 type Response {

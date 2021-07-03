@@ -539,7 +539,7 @@ func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
 	return stream, nil
 }
 
-func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
+func (r *UserResolver) Notifications() ([]*NotificationResolver, error) {
 	// Find notifications readable by this user
 	var data []*datastructure.Notification
 
@@ -601,7 +601,7 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 	}
 
 	if len(notifications) == 0 {
-		return []*notificationResolver{}, nil
+		return []*NotificationResolver{}, nil
 	}
 
 	var (
@@ -610,7 +610,7 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 		mentionedEmoteIDs []primitive.ObjectID
 		mentionedEmotes   []*datastructure.Emote
 		tempmap           map[primitive.ObjectID]bool
-		resolvers         = []*notificationResolver{}
+		resolvers         = []*NotificationResolver{}
 	)
 
 	for i, n := range notifications {

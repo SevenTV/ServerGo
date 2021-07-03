@@ -9,34 +9,34 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type notificationResolver struct {
+type NotificationResolver struct {
 	ctx context.Context
 	v   *datastructure.Notification
 
 	fields map[string]*SelectedField
 }
 
-func GenerateNotificationResolver(ctx context.Context, notification *datastructure.Notification, fields map[string]*SelectedField) (*notificationResolver, error) {
-	return &notificationResolver{
+func GenerateNotificationResolver(ctx context.Context, notification *datastructure.Notification, fields map[string]*SelectedField) (*NotificationResolver, error) {
+	return &NotificationResolver{
 		ctx,
 		notification,
 		fields,
 	}, nil
 }
 
-func (r *notificationResolver) ID() string {
+func (r *NotificationResolver) ID() string {
 	return r.v.ID.Hex()
 }
 
-func (r *notificationResolver) Announcement() bool {
+func (r *NotificationResolver) Announcement() bool {
 	return r.v.Announcement
 }
 
-func (r *notificationResolver) Title() string {
+func (r *NotificationResolver) Title() string {
 	return r.v.Title
 }
 
-func (r *notificationResolver) MessageParts() []*messagePart {
+func (r *NotificationResolver) MessageParts() []*messagePart {
 	parts := make([]*messagePart, len(r.v.MessageParts))
 
 	for i, v := range r.v.MessageParts {
@@ -65,7 +65,7 @@ func (r *notificationResolver) MessageParts() []*messagePart {
 	return parts
 }
 
-func (r *notificationResolver) Users() ([]*UserResolver, error) {
+func (r *NotificationResolver) Users() ([]*UserResolver, error) {
 	builder := actions.Notifications.CreateFrom(*r.v)
 
 	users := builder.Notification.Users
@@ -82,7 +82,7 @@ func (r *notificationResolver) Users() ([]*UserResolver, error) {
 	return resolvers, nil
 }
 
-func (r *notificationResolver) Emotes() ([]*EmoteResolver, error) {
+func (r *NotificationResolver) Emotes() ([]*EmoteResolver, error) {
 	builder := actions.Notifications.CreateFrom(*r.v)
 
 	users := builder.Notification.Emotes
@@ -99,7 +99,7 @@ func (r *notificationResolver) Emotes() ([]*EmoteResolver, error) {
 	return resolvers, nil
 }
 
-func (r *notificationResolver) Read() bool {
+func (r *NotificationResolver) Read() bool {
 	return r.v.Read
 }
 
