@@ -33,16 +33,16 @@ func (r *notificationResolver) Announcement() bool {
 }
 
 func (r *notificationResolver) Title() string {
-	return r.v.Content.Title
+	return r.v.Title
 }
 
 func (r *notificationResolver) MessageParts() []*messagePart {
-	parts := make([]*messagePart, len(r.v.Content.MessageParts))
+	parts := make([]*messagePart, len(r.v.MessageParts))
 
-	for i, v := range r.v.Content.MessageParts {
+	for i, v := range r.v.MessageParts {
 		pType := int32(v.Type)
 		pData := ""
-		if v.Type != datastructure.NotificationContentMessagePartTypeText {
+		if v.Type != datastructure.NotificationMessagePartTypeText {
 			pData = v.Mention.Hex()
 		} else if v.Text != nil {
 			pData = *v.Text
@@ -65,19 +65,10 @@ func (r *notificationResolver) MessageParts() []*messagePart {
 	return parts
 }
 
-func (r *notificationResolver) ReadBy() []string {
-	result := make([]string, len(r.v.ReadBy))
-	for i, v := range r.v.ReadBy {
-		result[i] = v.Hex()
-	}
-
-	return result
-}
-
 func (r *notificationResolver) Users() ([]*UserResolver, error) {
 	builder := actions.Notifications.CreateFrom(*r.v)
 
-	users := builder.Notification.Content.Users
+	users := builder.Notification.Users
 	resolvers := make([]*UserResolver, len(users))
 	for i, v := range users {
 		resolver, err := GenerateUserResolver(r.ctx, v, &v.ID, r.fields)
@@ -94,7 +85,7 @@ func (r *notificationResolver) Users() ([]*UserResolver, error) {
 func (r *notificationResolver) Emotes() ([]*EmoteResolver, error) {
 	builder := actions.Notifications.CreateFrom(*r.v)
 
-	users := builder.Notification.Content.Emotes
+	users := builder.Notification.Emotes
 	resolvers := make([]*EmoteResolver, len(users))
 	for i, v := range users {
 		resolver, err := GenerateEmoteResolver(r.ctx, v, &v.ID, r.fields)

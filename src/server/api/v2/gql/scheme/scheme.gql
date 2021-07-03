@@ -335,8 +335,6 @@ type Notification {
   title: String!
   # The notification's formattable message parts
   message_parts: [NotificationMessagePart!]!
-  # The users who have read this notification
-  read_by: [String!]!
 
   # The users mentioned in this notification
   users: [UserPartial]!

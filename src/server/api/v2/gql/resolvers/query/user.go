@@ -633,14 +633,14 @@ func (r *UserResolver) Notifications() ([]*notificationResolver, error) {
 					continue
 				}
 
-				n.Notification.Content.Users = append(n.Notification.Content.Users, u)
+				n.Notification.Users = append(n.Notification.Users, u)
 			}
 			for _, e := range mentionedEmotes {
 				if !utils.ContainsObjectID(n.MentionedEmotes, e.ID) {
 					continue
 				}
 
-				n.Notification.Content.Emotes = append(n.Notification.Content.Emotes, e)
+				n.Notification.Emotes = append(n.Notification.Emotes, e)
 			}
 
 			// Generate resolvers for the current notification

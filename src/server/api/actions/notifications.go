@@ -18,13 +18,14 @@ type NotificationBuilder struct {
 	MentionedUsers  []primitive.ObjectID
 	MentionedEmotes []primitive.ObjectID
 	MentionedRoles  []primitive.ObjectID
+	TargetUsers     []primitive.ObjectID
 }
 
 // GetMentionedUsers: Get the data of mentioned users in the notification's message parts
 func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (NotificationBuilder, map[primitive.ObjectID]bool) {
 	userIDs := make(map[primitive.ObjectID]bool)
-	for _, part := range b.Notification.Content.MessageParts { // Check message parts for user mentions
-		if part.Type != datastructure.NotificationContentMessagePartTypeUserMention {
+	for _, part := range b.Notification.MessageParts { // Check message parts for user mentions
+		if part.Type != datastructure.NotificationMessagePartTypeUserMention {
 			continue
 		}
 		if part.Mention == nil {
@@ -44,8 +45,8 @@ func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (Notificatio
 // GetMentionedEmotes: Get the data of mentioned emotes in the notification's message parts
 func (b NotificationBuilder) GetMentionedEmotes(ctx context.Context) (NotificationBuilder, map[primitive.ObjectID]bool) {
 	emoteIDs := make(map[primitive.ObjectID]bool)
-	for _, part := range b.Notification.Content.MessageParts { // Check message parts for emote mentions
-		if part.Type != datastructure.NotificationContentMessagePartTypeEmoteMention {
+	for _, part := range b.Notification.MessageParts { // Check message parts for emote mentions
+		if part.Type != datastructure.NotificationMessagePartTypeEmoteMention {
 			continue
 		}
 		if part.Mention == nil {
@@ -85,15 +86,15 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 
 // SetTitle: Set the Notification's Title
 func (b NotificationBuilder) SetTitle(title string) NotificationBuilder {
-	b.Notification.Content.Title = title
+	b.Notification.Title = title
 
 	return b
 }
 
 // AddTextMessagePart: Append a Text part to the notification
 func (b NotificationBuilder) AddTextMessagePart(text string) NotificationBuilder {
-	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
-		Type: datastructure.NotificationContentMessagePartTypeText,
+	b.Notification.MessageParts = append(b.Notification.MessageParts, datastructure.NotificationMessagePart{
+		Type: datastructure.NotificationMessagePartTypeText,
 		Text: &text,
 	})
 
@@ -102,8 +103,8 @@ func (b NotificationBuilder) AddTextMessagePart(text string) NotificationBuilder
 
 // AddUserMentionPart: Append a User Mention to the notification
 func (b NotificationBuilder) AddUserMentionPart(user primitive.ObjectID) NotificationBuilder {
-	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
-		Type:    datastructure.NotificationContentMessagePartTypeUserMention,
+	b.Notification.MessageParts = append(b.Notification.MessageParts, datastructure.NotificationMessagePart{
+		Type:    datastructure.NotificationMessagePartTypeUserMention,
 		Mention: &user,
 	})
 
@@ -112,8 +113,8 @@ func (b NotificationBuilder) AddUserMentionPart(user primitive.ObjectID) Notific
 
 // AddEmoteMentionPart: Append a Emote Mention to the notification
 func (b NotificationBuilder) AddEmoteMentionPart(emote primitive.ObjectID) NotificationBuilder {
-	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
-		Type:    datastructure.NotificationContentMessagePartTypeEmoteMention,
+	b.Notification.MessageParts = append(b.Notification.MessageParts, datastructure.NotificationMessagePart{
+		Type:    datastructure.NotificationMessagePartTypeEmoteMention,
 		Mention: &emote,
 	})
 
@@ -122,24 +123,10 @@ func (b NotificationBuilder) AddEmoteMentionPart(emote primitive.ObjectID) Notif
 
 // AddRoleMentionPart: Append a Role Mention to the notification
 func (b NotificationBuilder) AddRoleMentionPart(role primitive.ObjectID) NotificationBuilder {
-	b.Notification.Content.MessageParts = append(b.Notification.Content.MessageParts, datastructure.NotificationContentMessagePart{
-		Type:    datastructure.NotificationContentMessagePartTypeRoleMention,
+	b.Notification.MessageParts = append(b.Notification.MessageParts, datastructure.NotificationMessagePart{
+		Type:    datastructure.NotificationMessagePartTypeRoleMention,
 		Mention: &role,
 	})
-
-	return b
-}
-
-// AddTargetUsers: Add one or more users who may read this notification
-func (b NotificationBuilder) AddTargetUsers(userIDs ...primitive.ObjectID) NotificationBuilder {
-	b.Notification.TargetUsers = append(b.Notification.TargetUsers, userIDs...)
-
-	return b
-}
-
-// AddTargetRoles: Add one or more roles that may allow their members to read this notification
-func (b NotificationBuilder) AddTargetRoles(roleIDs ...primitive.ObjectID) NotificationBuilder {
-	b.Notification.TargetRoles = append(b.Notification.TargetRoles, roleIDs...)
 
 	return b
 }
@@ -152,9 +139,9 @@ func (b NotificationBuilder) MarkAsAnnouncement() NotificationBuilder {
 	return b
 }
 
-// SetReadBy: The users who've read this notification
-func (b NotificationBuilder) SetReadBy(userIDs ...primitive.ObjectID) NotificationBuilder {
-	b.Notification.ReadBy = append(b.Notification.ReadBy, userIDs...)
+// AddTargetUsers(u): Add one or more users who may read this notification
+func (b NotificationBuilder) AddTargetUsers(userIDs ...primitive.ObjectID) NotificationBuilder {
+	b.TargetUsers = append(b.TargetUsers, userIDs...)
 
 	return b
 }
@@ -163,13 +150,8 @@ func (b NotificationBuilder) SetReadBy(userIDs ...primitive.ObjectID) Notificati
 func (*notifications) Create() NotificationBuilder {
 	builder := NotificationBuilder{
 		Notification: datastructure.Notification{
-			ReadBy:      []primitive.ObjectID{},
-			TargetUsers: []primitive.ObjectID{},
-			TargetRoles: []primitive.ObjectID{},
-			Content: datastructure.NotificationContent{
-				Title:        "System Message",
-				MessageParts: []datastructure.NotificationContentMessagePart{},
-			},
+			Title:        "System Message",
+			MessageParts: []datastructure.NotificationMessagePart{},
 		},
 	}
 

@@ -329,35 +329,32 @@ type Broadcast struct {
 }
 
 type Notification struct {
-	ID           primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
-	TargetUsers  []primitive.ObjectID `json:"target_users" bson:"target_users"` // The users who can see the notification
-	TargetRoles  []primitive.ObjectID `json:"target_roles" bson:"target_roles"` // The roles that can see the notification
-	Announcement bool                 `json:"announcement" bson:"announcement"` // If true, the notification is global and visible to all users regardless of targets
+	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Announcement bool               `json:"announcement" bson:"announcement"` // If true, the notification is global and visible to all users regardless of targets
 
-	Content NotificationContent  `json:"content" bson:"content"` // The visual contents of the notification
-	ReadBy  []primitive.ObjectID `json:"read_by" bson:"read_by"` // The users who have read this notification
-}
-
-type NotificationContent struct {
-	Title        string                           `json:"title" bson:"title"`                 // The notification's heading / title
-	MessageParts []NotificationContentMessagePart `json:"message_parts" bson:"message_parts"` // The parts making up the notification's formatted message
+	Title        string                    `json:"title" bson:"title"`                 // The notification's heading / title
+	MessageParts []NotificationMessagePart `json:"message_parts" bson:"message_parts"` // The parts making up the notification's formatted message
 
 	Users  []*User  `json:"users" bson:"-"`  // The users mentioned in this notification
 	Emotes []*Emote `json:"emotes" bson:"-"` // The emotesm entioned in this notification
 }
 
-type NotificationContentMessagePart struct {
+type NotificationMessagePart struct {
 	Type NotificationContentMessagePartType `json:"part_type" bson:"part_type"` // The type of this part
 
 	Text    *string             `json:"text" bson:"text"`
 	Mention *primitive.ObjectID `json:"mention" bson:"mention"`
 }
 
+type NotificationReadState struct {
+	TargetUser primitive.ObjectID `json:"target" bson:"target"`
+}
+
 const (
-	NotificationContentMessagePartTypeText NotificationContentMessagePartType = 1 + iota
-	NotificationContentMessagePartTypeUserMention
-	NotificationContentMessagePartTypeEmoteMention
-	NotificationContentMessagePartTypeRoleMention
+	NotificationMessagePartTypeText NotificationContentMessagePartType = 1 + iota
+	NotificationMessagePartTypeUserMention
+	NotificationMessagePartTypeEmoteMention
+	NotificationMessagePartTypeRoleMention
 )
 
 type NotificationContentMessagePartType int8
