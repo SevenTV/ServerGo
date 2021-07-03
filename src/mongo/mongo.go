@@ -122,6 +122,7 @@ func init() {
 		{Keys: bson.M{"content.title": 1}},
 		{Keys: bson.M{"content.message_parts.mention": 1}},
 	})
+	_, err = Database.Collection("notifications_read").Indexes().CreateMany(ctx, []mongo.IndexModel{})
 
 	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
 
