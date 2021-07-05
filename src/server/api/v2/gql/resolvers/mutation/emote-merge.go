@@ -2,13 +2,13 @@ package mutation_resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	query_resolvers "github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers/query"
 	"github.com/SevenTV/ServerGo/src/utils"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -32,16 +32,15 @@ func (*MutationResolver) MergeEmote(ctx context.Context, args struct {
 	var (
 		oldID primitive.ObjectID
 		newID primitive.ObjectID
+		err   error
 	)
-	if id, err := primitive.ObjectIDFromHex(args.OldID); err != nil {
+	if oldID, err = primitive.ObjectIDFromHex(args.OldID); err != nil {
+		log.WithError(err).Error("failed to merge emotes")
 		return nil, err
-	} else {
-		oldID = id
 	}
-	if id, err := primitive.ObjectIDFromHex(args.NewID); err != nil {
+	if newID, err = primitive.ObjectIDFromHex(args.NewID); err != nil {
+		log.WithError(err).Error("failed to merge emotes")
 		return nil, err
-	} else {
-		newID = id
 	}
 
 	emote, err := actions.Emotes.MergeEmote(ctx, actions.MergeEmoteOptions{
@@ -51,7 +50,7 @@ func (*MutationResolver) MergeEmote(ctx context.Context, args struct {
 		Reason: args.Reason,
 	})
 	if err != nil {
-		fmt.Println(err)
+		log.WithError(err).Error("failed to merge emotes")
 		return nil, err
 	}
 
