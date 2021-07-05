@@ -85,7 +85,6 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 
 				update["emote_alias"] = ch.EmoteAlias
 			}
-			fmt.Println(update)
 
 			// Append a bulk write update operation.
 			// This will be executed later once the merge is confirmed
@@ -164,6 +163,9 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 			Write(ctx)
 
 	}
+
+	// Now we will delete the old emote
+	Emotes.Delete(ctx, &oldEmote)
 
 	return nil
 }
