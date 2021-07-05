@@ -11,16 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type notifications struct{}
-
-type NotificationBuilder struct {
-	Notification    datastructure.Notification
-	MentionedUsers  []primitive.ObjectID
-	MentionedEmotes []primitive.ObjectID
-	MentionedRoles  []primitive.ObjectID
-	TargetUsers     []primitive.ObjectID
-}
-
 // GetMentionedUsers: Get the data of mentioned users in the notification's message parts
 func (b NotificationBuilder) GetMentionedUsers(ctx context.Context) (NotificationBuilder, map[primitive.ObjectID]bool) {
 	userIDs := make(map[primitive.ObjectID]bool)
@@ -185,5 +175,3 @@ func (*notifications) CreateFrom(notification datastructure.Notification) Notifi
 
 	return builder
 }
-
-var Notifications notifications = notifications{}

@@ -10,6 +10,8 @@ type Mutation {
   deleteEmote(id: String!, reason: String!): Boolean
   # Restore an emote that has been deleted. Requires permission.
   restoreEmote(id: String!, reason: String): Response
+  # Merge an emote into another emote, transferring all its channels and swapping aliases
+  mergeEmote(old_id: String!, new_id: String!, reason: String!): Emote
   # Add an emote to a channel. Requires permission.
   addChannelEmote(channel_id: String!, emote_id: String!, reason: String): User
   # Edit a channel emote with overrides
