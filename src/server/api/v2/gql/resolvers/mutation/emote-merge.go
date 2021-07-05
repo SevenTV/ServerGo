@@ -43,9 +43,10 @@ func (*MutationResolver) MergeEmote(ctx context.Context, args struct {
 	}
 
 	emote, err := actions.Emotes.MergeEmote(ctx, actions.MergeEmoteOptions{
-		Actor: usr,
-		OldID: oldID,
-		NewID: newID,
+		Actor:  usr,
+		OldID:  oldID,
+		NewID:  newID,
+		Reason: args.Reason,
 	})
 	if err != nil {
 		fmt.Println(err)
