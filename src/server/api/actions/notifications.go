@@ -70,7 +70,7 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 	}); err != nil {
 		log.WithError(err).Error("mongo")
 		return err
-	} else {
+	} else if len(b.TargetUsers) > 0 {
 		id := d.UpsertedID.(primitive.ObjectID) // Get the ID of the created notification
 
 		// Create notification read states target users
