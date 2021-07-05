@@ -164,7 +164,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 			AddEmoteMentionPart(newEmote.ID).
 			AddTextMessagePart(" by ").
 			AddUserMentionPart(opts.Actor.ID).
-			AddTextMessagePart(fmt.Sprintf(" for the reason: \"%v\". No further action is required.", opts.Reason)).
+			AddTextMessagePart(fmt.Sprintf("for the reason \"%v\". %d new channels have been added to your emote and no further action is required.", opts.Reason, len(switchedChannels))).
 			Write(ctx)
 
 	}
