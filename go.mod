@@ -14,7 +14,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/gofiber/fiber/v2 v2.14.0
-	github.com/gofiber/websocket/v2 v2.0.6
+	github.com/gofiber/websocket/v2 v2.0.7
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/graph-gophers/graphql-go v0.0.0-20210319060855-d2656e8bde15

@@ -153,8 +153,8 @@ github.com/gobuffalo/packr/v2 v2.8.1 h1:tkQpju6i3EtMXJ9uoF5GT6kB+LMTimDWD8Xvbz6z
 github.com/gobuffalo/packr/v2 v2.8.1/go.mod h1:c/PLlOuTU+p3SybaJATW3H6lX/iK7xEz5OeMf+NnJpg=
 github.com/gobuffalo/syncx v0.0.0-20190224160051-33c29581e754/go.mod h1:HhnNqWY95UYwwW3uSASeV7vtgYkT2t16hJgV3AEPUpw=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
-github.com/gofiber/websocket/v2 v2.0.6 h1:qnPq52QI9SGFopIz3GiT9sStsk+PC3UntRFddbf3cLs=
-github.com/gofiber/websocket/v2 v2.0.6/go.mod h1:NhJB3E31OXeTW/OUtdqGQckr2wo9dfv9C2RQ8gxXsYg=
+github.com/gofiber/websocket/v2 v2.0.7 h1:ZRUMTzc2VQkSMWBMF52YthWbAd9gD7LfzHCV7T1PThE=
+github.com/gofiber/websocket/v2 v2.0.7/go.mod h1:Ts9Bxcbz6BK1dap3flpT9Y0KHKTOh5sBDoDAB9+PzM0=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
