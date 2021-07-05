@@ -27,8 +27,10 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 	logInfo.Info("Starting Emote Merge")
 
 	// Get the old & new emotes
-	var oldEmote datastructure.Emote
-	var newEmote datastructure.Emote
+	var (
+		oldEmote datastructure.Emote
+		newEmote datastructure.Emote
+	)
 	res := mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
 		"_id": opts.OldID,
 	})

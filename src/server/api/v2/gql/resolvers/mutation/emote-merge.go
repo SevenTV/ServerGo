@@ -29,8 +29,10 @@ func (*MutationResolver) MergeEmote(ctx context.Context, args struct {
 	}
 
 	// Parse emote IDs
-	var oldID primitive.ObjectID
-	var newID primitive.ObjectID
+	var (
+		oldID primitive.ObjectID
+		newID primitive.ObjectID
+	)
 	if id, err := primitive.ObjectIDFromHex(args.OldID); err != nil {
 		return nil, err
 	} else {
