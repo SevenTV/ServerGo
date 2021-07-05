@@ -13,7 +13,12 @@ import (
 )
 
 // MergeEmote: Merge an emote into another emote, transferring all its channels and swapping aliases
-func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
+func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastructure.Emote, error) {
+	// The old & new ID can't be equal
+	if opts.OldID == opts.NewID {
+		return nil, fmt.Errorf("Cannot merge emote into itself")
+	}
+
 	logInfo := log.WithFields(log.Fields{
 		"OldEmoteID": opts.OldID,
 		"NewEmoteID": opts.NewID,
@@ -28,16 +33,16 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 		"_id": opts.OldID,
 	})
 	if res.Err() != nil {
-		return res.Err()
+		return nil, res.Err()
 	}
 	if err := res.Decode(&oldEmote); err != nil {
-		return err
+		return nil, err
 	}
 	res = mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
 		"_id": opts.NewID,
 	})
 	if err := res.Decode(&newEmote); err != nil {
-		return err
+		return nil, err
 	}
 
 	switchedChannels := []primitive.ObjectID{}
@@ -52,10 +57,10 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if err := cur.All(ctx, &channels); err != nil {
-			return err
+			return nil, err
 		}
 
 		// Find aliases
@@ -108,7 +113,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 		result, err := mongo.Database.Collection("users").BulkWrite(ctx, userOps)
 		if err != nil {
 			log.WithError(err).WithField("count", len(userOps)).Error("mongo, failed to update users during emote merger")
-			return err
+			return nil, err
 		}
 		logInfo.Infof("Targeted %d users and updated %d users during merger of Emote(id=%v) into Emote(id=%v)",
 			result.MatchedCount, result.ModifiedCount, oldEmote.ID.Hex(), newEmote.ID.Hex(),
@@ -167,7 +172,21 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) error {
 	// Now we will delete the old emote
 	Emotes.Delete(ctx, &oldEmote)
 
-	return nil
+	// Create an Audit Log
+	_, err := mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+		Type:      datastructure.AuditLogTypeEmoteMerge,
+		CreatedBy: opts.Actor.ID,
+		Target:    &datastructure.Target{ID: &oldEmote.ID, Type: "emotes"},
+		Changes: []*datastructure.AuditLogChange{
+			{Key: "merged_into", OldValue: nil, NewValue: newEmote.ID},
+		},
+		Reason: &opts.Reason,
+	})
+	if err != nil {
+		log.WithError(err).Error("mongo")
+	}
+
+	return &newEmote, nil
 }
 
 type MergeEmoteOptions struct {

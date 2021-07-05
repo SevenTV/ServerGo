@@ -42,14 +42,20 @@ func (*MutationResolver) MergeEmote(ctx context.Context, args struct {
 		newID = id
 	}
 
-	if err := actions.Emotes.MergeEmote(ctx, actions.MergeEmoteOptions{
+	emote, err := actions.Emotes.MergeEmote(ctx, actions.MergeEmoteOptions{
 		Actor: usr,
 		OldID: oldID,
 		NewID: newID,
-	}); err != nil {
+	})
+	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	return nil, nil
+	field, failed := query_resolvers.GenerateSelectedFieldMap(ctx, resolvers.MaxDepth)
+	if failed {
+		return nil, resolvers.ErrDepth
+	}
+
+	return query_resolvers.GenerateEmoteResolver(ctx, emote, &emote.ID, field.Children)
 }

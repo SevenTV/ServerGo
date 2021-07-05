@@ -268,6 +268,7 @@ const (
 	AuditLogTypeEmoteDisable    = 3
 	AuditLogTypeEmoteEdit       = 4
 	AuditLogTypeEmoteUndoDelete = 4
+	AuditLogTypeEmoteMerge      = 5
 
 	// Auth (20-29)
 	AuditLogTypeAuthIn  = 20
