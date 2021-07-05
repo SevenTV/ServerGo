@@ -3,11 +3,7 @@ package mutation_resolvers
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
-	"github.com/SevenTV/ServerGo/src/aws"
-	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
@@ -76,15 +72,7 @@ func (*MutationResolver) DeleteEmote(ctx context.Context, args struct {
 		}
 	}
 
-	_, err = mongo.Database.Collection("emotes").UpdateOne(ctx, bson.M{
-		"_id": id,
-	}, bson.M{
-		"$set": bson.M{
-			"status":             datastructure.EmoteStatusDeleted,
-			"last_modified_date": time.Now(),
-		},
-	})
-
+	err = actions.Emotes.Delete(ctx, emote)
 	if err != nil {
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
@@ -102,33 +90,6 @@ func (*MutationResolver) DeleteEmote(ctx context.Context, args struct {
 	if err != nil {
 		log.WithError(err).Error("mongo")
 	}
-
-	wg := &sync.WaitGroup{}
-	wg.Add(4)
-
-	for i := 1; i <= 4; i++ {
-		go func(i int) {
-			defer wg.Done()
-			obj := fmt.Sprintf("emote/%s", emote.ID.Hex())
-			err := aws.Expire(configure.Config.GetString("aws_cdn_bucket"), obj, i)
-			if err != nil {
-				log.WithError(err).WithField("obj", obj).Error("aws")
-			}
-		}(i)
-	}
-
-	_, err = mongo.Database.Collection("users").UpdateMany(ctx, bson.M{
-		"emotes": id,
-	}, bson.M{
-		"$pull": bson.M{
-			"emotes": id,
-		},
-	})
-	if err != nil {
-		log.WithError(err).Error("mongo")
-	}
-
-	wg.Wait()
 
 	// Send a notification to the emote owner if it was deleted by a user other than themselve
 	if usr.ID.Hex() != emote.OwnerID.Hex() {
