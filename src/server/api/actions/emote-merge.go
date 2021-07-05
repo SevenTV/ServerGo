@@ -126,48 +126,60 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 	// Send notifications
 	{
 		// Send a notification to the old emote's owner that their emote was merged
-		go Notifications.Create().
-			SetTitle("An Emote You Own Was Merged").AddTargetUsers(oldEmote.OwnerID).
-			AddTextMessagePart("Your emote ").
-			AddEmoteMentionPart(oldEmote.ID).
-			AddTextMessagePart(" has been merged into ").
-			AddUserMentionPart(newEmote.OwnerID).
-			AddTextMessagePart("'s ").
-			AddEmoteMentionPart(newEmote.ID).
-			AddTextMessagePart(" by ").
-			AddUserMentionPart(opts.Actor.ID).
-			AddTextMessagePart(fmt.Sprintf(". Reason: \"%v\"", opts.Reason)).
-			Write(ctx)
+		go func() {
+			if err := Notifications.Create().
+				SetTitle("An Emote You Own Was Merged").
+				AddTargetUsers(oldEmote.OwnerID).
+				AddTextMessagePart("Your emote ").
+				AddEmoteMentionPart(oldEmote.ID).
+				AddTextMessagePart(" has been merged into ").
+				AddUserMentionPart(newEmote.OwnerID).
+				AddTextMessagePart("'s ").
+				AddEmoteMentionPart(newEmote.ID).
+				AddTextMessagePart(" by ").
+				AddUserMentionPart(opts.Actor.ID).
+				AddTextMessagePart(fmt.Sprintf(". Reason: \"%v\"", opts.Reason)).
+				Write(context.Background()); err != nil {
+				log.WithError(err).Error("failed to create notification")
+			}
+		}()
 
 		// Send a notification to the channels affected
-		go Notifications.Create().
-			SetTitle("A Channel Emote Was Merged").
-			AddTargetUsers(switchedChannels...).
-			AddTextMessagePart("One of your active channel emotes, ").
-			AddEmoteMentionPart(oldEmote.ID).
-			AddTextMessagePart(" was merged into ").
-			AddUserMentionPart(newEmote.OwnerID).
-			AddTextMessagePart("'s ").
-			AddEmoteMentionPart(newEmote.ID).
-			AddTextMessagePart(" by ").
-			AddUserMentionPart(opts.Actor.ID).
-			AddTextMessagePart(fmt.Sprintf("for the reason \"%v\". No further action is required.", opts.Reason)).
-			Write(ctx)
+		go func() {
+			if err := Notifications.Create().
+				SetTitle("A Channel Emote Was Merged").
+				AddTargetUsers(switchedChannels...).
+				AddTextMessagePart("One of your active channel emotes, ").
+				AddEmoteMentionPart(oldEmote.ID).
+				AddTextMessagePart(" was merged into ").
+				AddUserMentionPart(newEmote.OwnerID).
+				AddTextMessagePart("'s ").
+				AddEmoteMentionPart(newEmote.ID).
+				AddTextMessagePart(" by ").
+				AddUserMentionPart(opts.Actor.ID).
+				AddTextMessagePart(fmt.Sprintf("for the reason \"%v\". No further action is required.", opts.Reason)).
+				Write(context.Background()); err != nil {
+				log.WithError(err).Error("failed to create notification")
+			}
+		}()
 
 		// Send a notification to the owner of the new emote
-		go Notifications.Create().
-			SetTitle("An Emote Was Merged Into One You Own").AddTargetUsers(newEmote.OwnerID).
-			AddTextMessagePart("The emote ").
-			AddEmoteMentionPart(oldEmote.ID).
-			AddTextMessagePart(", which was owned by ").
-			AddUserMentionPart(oldEmote.OwnerID).
-			AddTextMessagePart(" was merged into your emote ").
-			AddEmoteMentionPart(newEmote.ID).
-			AddTextMessagePart(" by ").
-			AddUserMentionPart(opts.Actor.ID).
-			AddTextMessagePart(fmt.Sprintf("for the reason \"%v\". %d new channels have been added to your emote and no further action is required.", opts.Reason, len(switchedChannels))).
-			Write(ctx)
-
+		go func() {
+			if err := Notifications.Create().
+				SetTitle("An Emote Was Merged Into One You Own").AddTargetUsers(newEmote.OwnerID).
+				AddTextMessagePart("The emote ").
+				AddEmoteMentionPart(oldEmote.ID).
+				AddTextMessagePart(", which was owned by ").
+				AddUserMentionPart(oldEmote.OwnerID).
+				AddTextMessagePart(" was merged into your emote ").
+				AddEmoteMentionPart(newEmote.ID).
+				AddTextMessagePart(" by ").
+				AddUserMentionPart(opts.Actor.ID).
+				AddTextMessagePart(fmt.Sprintf("for the reason \"%v\". %d new channels have been added to your emote and no further action is required.", opts.Reason, len(switchedChannels))).
+				Write(context.Background()); err != nil {
+				log.WithError(err).Error("failed to create notification")
+			}
+		}()
 	}
 
 	// Now we will delete the old emote

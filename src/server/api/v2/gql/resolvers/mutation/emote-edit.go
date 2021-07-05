@@ -211,7 +211,12 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 					AddUserMentionPart(usr.ID).
 					AddTextMessagePart("!")
 
-				go notification.Write(ctx)
+				go func() {
+					// Send the notification
+					if err := notification.Write(context.Background()); err != nil {
+						log.WithError(err).Error("failed to create notification")
+					}
+				}()
 			}
 
 		}

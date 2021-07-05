@@ -102,7 +102,12 @@ func (*MutationResolver) DeleteEmote(ctx context.Context, args struct {
 			AddUserMentionPart(usr.ID).
 			AddTextMessagePart(fmt.Sprintf("with the reason: \"%v\".", utils.Ternary(args.Reason != "", args.Reason, "no reason")))
 
-		go notification.Write(ctx) // Send the notification
+		go func() {
+			// Send the notification
+			if err := notification.Write(context.Background()); err != nil {
+				log.WithError(err).Error("failed to create notification")
+			}
+		}()
 	}
 
 	go discord.SendEmoteDelete(*emote, *usr, args.Reason)

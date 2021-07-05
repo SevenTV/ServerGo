@@ -293,7 +293,7 @@ func CreateEmoteRoute(router fiber.Router) {
 						continue
 					}
 					if err = mw.AddImage(img); err != nil {
-						log.WithError(err).Error("AddImage i=%v", ind)
+						log.WithError(err).Errorf("AddImage i=%v", ind)
 					}
 					img.Destroy()
 				}
