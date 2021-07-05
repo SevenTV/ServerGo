@@ -170,7 +170,9 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 	}
 
 	// Now we will delete the old emote
-	Emotes.Delete(ctx, &oldEmote)
+	if err := Emotes.Delete(ctx, &oldEmote); err != nil {
+		return nil, err
+	}
 
 	// Create an Audit Log
 	_, err := mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
