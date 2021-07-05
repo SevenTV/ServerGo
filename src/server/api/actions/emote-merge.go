@@ -87,7 +87,6 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 
 				} else if oldEmote.Name != newEmote.Name { // Old emote name is different from the emote it is being merged to
 					ch.EmoteAlias[newEmote.ID.Hex()] = oldEmote.Name
-
 				}
 
 				update["emote_alias"] = ch.EmoteAlias
@@ -199,9 +198,3 @@ type MergeEmoteOptions struct {
 	NewID  primitive.ObjectID
 	Reason string
 }
-
-/*
-* Step 1: Add aliases from Old -> New, including user-set aliases and if the old emote has a different name than the new
-* Step 2: Move Channels from Old -> New
-* Step 3: Delete the emote
- */
