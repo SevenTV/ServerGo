@@ -232,7 +232,12 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		_ = res.All(ctx, user.Bans)
 	}
 
-	if _, ok := fields["notifications"]; ok && usrValid && actorCanEdit {
+	_, getNotifyData := fields["notifications"]
+	if !getNotifyData {
+		_, getNotifyData = fields["notification_count"]
+	}
+
+	if getNotifyData && usrValid && actorCanEdit {
 		// Find notifications readable by this user
 		pipeline := mongo.Pipeline{
 			bson.D{ // Step 1: Match only readstates where the target is the user
