@@ -49,12 +49,16 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 	}
 
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
-	actorCanEdit := user.ID == usr.ID
-	if !actorCanEdit {
-		for _, e := range user.EditorIDs {
-			if e == usr.ID {
-				actorCanEdit = true
-				break
+	actorCanEdit := false
+	if usr != nil {
+		actorCanEdit = usr.ID == user.ID
+
+		if !actorCanEdit {
+			for _, e := range user.EditorIDs {
+				if e == usr.ID {
+					actorCanEdit = true
+					break
+				}
 			}
 		}
 	}
