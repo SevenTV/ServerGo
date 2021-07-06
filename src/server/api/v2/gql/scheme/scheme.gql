@@ -233,8 +233,10 @@ type User {
   follower_count: Int!
   # Get the user's current live broadcast
   broadcast: Broadcast
-  # Get the user's unread notifications
+  # Get the user's most recent notifications
   notifications: [Notification]!
+  # Get amount of unread notifications this user has
+  notification_count: Int!
 }
 
 type UserPartial {
