@@ -548,7 +548,16 @@ func (r *UserResolver) Notifications() ([]*NotificationResolver, error) {
 	// Check permissions: user must be
 	if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
 		if r.v.ID != usr.ID {
-			return []*NotificationResolver{}, nil
+			isEditor := false
+			for _, e := range r.v.EditorIDs {
+				if e == usr.ID {
+					isEditor = true
+					break
+				}
+			}
+			if !isEditor {
+				return []*NotificationResolver{}, nil
+			}
 		}
 	}
 
