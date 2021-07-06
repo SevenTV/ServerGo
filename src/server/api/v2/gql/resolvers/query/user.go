@@ -540,9 +540,20 @@ func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
 }
 
 func (r *UserResolver) Notifications() ([]*NotificationResolver, error) {
+	usr, ok := r.ctx.Value(utils.UserKey).(*datastructure.User)
+	if !ok {
+		return []*NotificationResolver{}, nil
+	}
+
+	// Check permissions: user must be
+	if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
+		if r.v.ID != usr.ID {
+			return []*NotificationResolver{}, nil
+		}
+	}
+
 	// Find notifications readable by this user
 	var data []*datastructure.Notification
-
 	pipeline := mongo.Pipeline{
 		bson.D{ // Step 1: Match only readstates where the target is the user
 			bson.E{
