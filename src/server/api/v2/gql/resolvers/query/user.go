@@ -243,6 +243,20 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 					},
 				},
 			},
+			bson.D{
+				bson.E{
+					Key: "$sort",
+					Value: bson.M{
+						"_id": -1,
+					},
+				},
+			},
+			bson.D{
+				bson.E{
+					Key:   "$limit",
+					Value: 50,
+				},
+			},
 			bson.D{ // Step 2: Find the target notification from the other collection
 				bson.E{
 					Key: "$lookup",
@@ -262,8 +276,11 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 			},
 			bson.D{ // Step 4: Add the "read" field from the notification read state into the notification object
 				bson.E{
-					Key:   "$addFields",
-					Value: bson.M{"notification.read": "$read"},
+					Key: "$addFields",
+					Value: bson.M{
+						"notification.read":    "$read",
+						"notification.read_at": "$read_at",
+					},
 				},
 			},
 			bson.D{ // Step 5: Replace the root input with the notification that now has the readstate information :tf:
@@ -618,10 +635,7 @@ func (r *UserResolver) Broadcast() (*datastructure.Broadcast, error) {
 func (r *UserResolver) Notifications() ([]*NotificationResolver, error) {
 	// Transform all notifications to builders
 	notifications := []actions.NotificationBuilder{}
-	for i, n := range r.v.Notifications {
-		if i > 50 { // Only return up to 50 notifications
-			break
-		}
+	for _, n := range r.v.Notifications {
 		if n == nil {
 			continue
 		}
