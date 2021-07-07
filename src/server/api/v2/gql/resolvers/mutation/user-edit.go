@@ -2,10 +2,12 @@ package mutation_resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers"
 	query_resolvers "github.com/SevenTV/ServerGo/src/server/api/v2/gql/resolvers/query"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -40,6 +42,7 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 
 	update := bson.M{}
 	logChanges := []*datastructure.AuditLogChange{}
+	notifications := []actions.NotificationBuilder{}
 	req := args.User
 
 	// Update: Role
@@ -84,6 +87,16 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 				OldValue: target.RoleID,
 				NewValue: role.ID,
 			})
+			notifications = append(notifications, actions.Notifications.Create().
+				SetTitle("Role Changed").
+				AddTargetUsers(targetID).
+				AddTextMessagePart("Your global role was changed from ").
+				AddTextMessagePart(datastructure.GetRole(target.RoleID).Name).
+				AddTextMessagePart(" to ").
+				AddTextMessagePart(utils.Ternary(role.Default, "none", role.Name).(string)).
+				AddTextMessagePart(" by ").
+				AddUserMentionPart(usr.ID),
+			)
 		}
 	}
 
@@ -105,6 +118,15 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 			OldValue: target.EmoteSlots,
 			NewValue: slots,
 		})
+		notifications = append(notifications, actions.Notifications.Create().
+			SetTitle("Maximum Channel Emote Slots Changed").
+			AddTargetUsers(targetID).
+			AddTextMessagePart("Your channel emote slots ").
+			AddTextMessagePart(utils.Ternary(target.EmoteSlots > slots, "were reduced", "rose to").(string)).
+			AddTextMessagePart(fmt.Sprintf(" from %d to %d", target.EmoteSlots, slots)).
+			AddTextMessagePart(" by ").
+			AddUserMentionPart(usr.ID),
+		)
 	}
 
 	field, failed := query_resolvers.GenerateSelectedFieldMap(ctx, resolvers.MaxDepth)
@@ -136,6 +158,15 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 		if err != nil {
 			log.WithError(err).Error("mongo")
 		}
+
+		// Send notifications
+		go func() {
+			for _, n := range notifications {
+				if err := n.Write(ctx); err != nil {
+					log.WithError(err).Error("failed to create notification")
+				}
+			}
+		}()
 
 		return query_resolvers.GenerateUserResolver(ctx, user, &targetID, field.Children)
 	}
