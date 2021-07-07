@@ -23,6 +23,11 @@ func SendEmoteCreate(emote datastructure.Emote, actor datastructure.User) {
 		Embeds: []*dgo.MessageEmbed{
 			{
 				Title: emote.Name,
+				Author: &dgo.MessageEmbedAuthor{
+					URL:     utils.GetUserPageURL(actor.ID.Hex()),
+					IconURL: actor.ProfileImageURL,
+					Name:    actor.DisplayName,
+				},
 				Image: &dgo.MessageEmbedImage{
 					URL: utils.GetEmoteImageURL(emote.ID.Hex()),
 				},
@@ -70,6 +75,11 @@ func SendEmoteEdit(emote datastructure.Emote, actor datastructure.User, logs []*
 			{
 				Title:       emote.Name,
 				Description: fmt.Sprintf("by %v", ownerName),
+				Author: &dgo.MessageEmbedAuthor{
+					URL:     utils.GetUserPageURL(actor.ID.Hex()),
+					IconURL: actor.ProfileImageURL,
+					Name:    actor.DisplayName,
+				},
 				Thumbnail: &dgo.MessageEmbedThumbnail{
 					URL: utils.GetEmoteImageURL(emote.ID.Hex()),
 				},
@@ -92,11 +102,54 @@ func SendEmoteDelete(emote datastructure.Emote, actor datastructure.User, reason
 	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
 		Content: fmt.Sprintf("**[activity]** ❌ emote [%s](%v) deleted by [%s](%v)", emote.Name, utils.GetEmotePageURL(emote.ID.Hex()), actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex())),
 		Embeds: []*dgo.MessageEmbed{
-			{Description: fmt.Sprintf("Reason: %s", reason)},
+			{
+				Author: &dgo.MessageEmbedAuthor{
+					URL:     utils.GetUserPageURL(actor.ID.Hex()),
+					IconURL: actor.ProfileImageURL,
+					Name:    actor.DisplayName,
+				},
+				Description: fmt.Sprintf("Reason: %s", reason),
+			},
 		},
 	})
 	if err != nil {
 		log.WithError(err).Error("discord SendEmoteDelete")
+		return
+	}
+}
+
+func SendEmoteMerge(emote1 datastructure.Emote, emote2 datastructure.Emote, actor datastructure.User, channels int32, reason string) {
+	if webhookID == nil || webhookToken == nil {
+		return
+	}
+
+	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+		Content: fmt.Sprintf(
+			"**[activity]** 🔀 [%v](%v) merged the emote [%v](%v) into [%v](%v)",
+			actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex()),
+			emote1.Name, utils.GetEmotePageURL(emote1.ID.Hex()),
+			emote2.Name, utils.GetEmotePageURL(emote1.ID.Hex()),
+		),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Description: fmt.Sprintf("Reason: %v", reason),
+				Color:       16725715,
+				Author: &dgo.MessageEmbedAuthor{
+					URL:     utils.GetUserPageURL(actor.ID.Hex()),
+					IconURL: actor.ProfileImageURL,
+					Name:    actor.DisplayName,
+				},
+				Thumbnail: &dgo.MessageEmbedThumbnail{
+					URL: utils.GetEmoteImageURL(emote2.ID.Hex()),
+				},
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Channels Switched", Value: fmt.Sprint(channels)},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.WithError(err).Error("discord SendEmoteMerge")
 		return
 	}
 }

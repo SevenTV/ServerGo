@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	log "github.com/sirupsen/logrus"
@@ -180,6 +181,9 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 				log.WithError(err).Error("failed to create notification")
 			}
 		}()
+
+		// Send to Discord
+		go discord.SendEmoteMerge(oldEmote, newEmote, *opts.Actor, int32(len(switchedChannels)), opts.Reason)
 	}
 
 	// Now we will delete the old emote
