@@ -303,6 +303,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		// Get count of notifications
 		count, err := cache.GetCollectionSize(ctx, "notifications_read", bson.M{
 			"target": user.ID,
+			"read":   false,
 		})
 		if err != nil {
 			return nil, err

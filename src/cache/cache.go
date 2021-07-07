@@ -240,7 +240,7 @@ func GetCollectionSize(ctx context.Context, collection string, q interface{}, op
 			return 0, err
 		}
 
-		redis.Client.Set(ctx, key, count, 5*time.Minute)
+		redis.Client.Set(ctx, key, count, 1*time.Minute)
 		return count, nil
 	}
 
