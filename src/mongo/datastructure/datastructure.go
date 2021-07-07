@@ -338,9 +338,10 @@ type Notification struct {
 	Title        string                    `json:"title" bson:"title"`                 // The notification's heading / title
 	MessageParts []NotificationMessagePart `json:"message_parts" bson:"message_parts"` // The parts making up the notification's formatted message
 
-	Read   bool     `json:"read" bson:"read,omitempty"`
-	Users  []*User  `json:"users" bson:"-"`  // The users mentioned in this notification
-	Emotes []*Emote `json:"emotes" bson:"-"` // The emotesm entioned in this notification
+	Read   bool      `json:"read" bson:"read,omitempty"`
+	ReadAt time.Time `json:"read_at" bson:"read_at,omitempty"`
+	Users  []*User   `json:"users" bson:"-"`  // The users mentioned in this notification
+	Emotes []*Emote  `json:"emotes" bson:"-"` // The emotesm entioned in this notification
 }
 
 type NotificationMessagePart struct {

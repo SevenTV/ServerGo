@@ -3,6 +3,7 @@ package mutation_resolvers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
@@ -39,7 +40,8 @@ func (*MutationResolver) MarkNotificationsRead(ctx context.Context, args struct 
 		"target": usr.ID,
 	}, bson.M{
 		"$set": bson.M{
-			"read": true,
+			"read":    true,
+			"read_at": time.Now(),
 		},
 	})
 	if err != nil {

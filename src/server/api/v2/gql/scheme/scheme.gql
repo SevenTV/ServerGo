@@ -339,6 +339,8 @@ type Notification {
   announcement: Boolean!
   # The title of the notification
   title: String!
+  # When this notification was created
+  timestamp: String!
   # The notification's formattable message parts
   message_parts: [NotificationMessagePart!]!
 
@@ -348,6 +350,8 @@ type Notification {
   emotes: [Emote]!
   # Whether the notification has been read
   read: Boolean!
+  # When this notification was read
+  read_at: String
 }
 
 type NotificationMessagePart {

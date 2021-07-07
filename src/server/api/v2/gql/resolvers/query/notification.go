@@ -3,6 +3,7 @@ package query_resolvers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/server/api/actions"
@@ -34,6 +35,19 @@ func (r *NotificationResolver) Announcement() bool {
 
 func (r *NotificationResolver) Title() string {
 	return r.v.Title
+}
+
+func (r *NotificationResolver) Timestamp() string {
+	return r.v.ID.Timestamp().Format(time.RFC3339)
+}
+
+func (r *NotificationResolver) ReadAt() *string {
+	if r.v.ReadAt.IsZero() {
+		return nil
+	}
+
+	date := r.v.ReadAt.Format(time.RFC3339)
+	return &date
 }
 
 func (r *NotificationResolver) MessageParts() []*messagePart {
