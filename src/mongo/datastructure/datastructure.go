@@ -120,15 +120,16 @@ type User struct {
 	EmoteSlots      int32               `json:"emote_slots" bson:"emote_slots"` // User's maximum channel emote slots
 
 	// Relational Data
-	Emotes        *[]*Emote       `json:"emotes" bson:"-"`
-	OwnedEmotes   *[]*Emote       `json:"owned_emotes" bson:"-"`
-	Editors       *[]*User        `json:"editors" bson:"-"`
-	Role          *Role           `json:"role" bson:"-"`
-	EditorIn      *[]*User        `json:"editor_in" bson:"-"`
-	AuditEntries  *[]*AuditLog    `json:"audit_entries" bson:"-"`
-	Reports       *[]*Report      `json:"reports" bson:"-"`
-	Bans          *[]*Ban         `json:"bans" bson:"-"`
-	Notifications []*Notification `json:"-" bson:"-"`
+	Emotes            *[]*Emote       `json:"emotes" bson:"-"`
+	OwnedEmotes       *[]*Emote       `json:"owned_emotes" bson:"-"`
+	Editors           *[]*User        `json:"editors" bson:"-"`
+	Role              *Role           `json:"role" bson:"-"`
+	EditorIn          *[]*User        `json:"editor_in" bson:"-"`
+	AuditEntries      *[]*AuditLog    `json:"audit_entries" bson:"-"`
+	Reports           *[]*Report      `json:"reports" bson:"-"`
+	Bans              *[]*Ban         `json:"bans" bson:"-"`
+	Notifications     []*Notification `json:"-" bson:"-"`
+	NotificationCount *int64          `json:"-" bson:"-"`
 }
 
 // Get the user's maximum emote slot count

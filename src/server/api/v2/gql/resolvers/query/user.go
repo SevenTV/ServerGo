@@ -232,12 +232,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		_ = res.All(ctx, user.Bans)
 	}
 
-	_, getNotifyData := fields["notifications"]
-	if !getNotifyData {
-		_, getNotifyData = fields["notification_count"]
-	}
-
-	if getNotifyData && usrValid && actorCanEdit {
+	if _, ok := fields["notifications"]; ok && usrValid && actorCanEdit {
 		// Find notifications readable by this user
 		pipeline := mongo.Pipeline{
 			bson.D{ // Step 1: Match only readstates where the target is the user
@@ -285,6 +280,18 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		if err := cur.All(ctx, &user.Notifications); err != nil {
 			return nil, err
 		}
+	}
+
+	if _, ok := fields["notification_count"]; ok && usrValid && actorCanEdit {
+		// Get count of notifications
+		count, err := cache.GetCollectionSize(ctx, "notifications_read", bson.M{
+			"target": user.ID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		user.NotificationCount = &count
 	}
 
 	r := &UserResolver{
@@ -699,5 +706,9 @@ func (r *UserResolver) Notifications() ([]*NotificationResolver, error) {
 }
 
 func (r *UserResolver) NotificationCount() int32 {
-	return int32(len(r.v.Notifications))
+	if r.v.NotificationCount == nil {
+		return 0
+	}
+
+	return int32(*r.v.NotificationCount)
 }
