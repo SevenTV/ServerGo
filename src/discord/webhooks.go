@@ -128,7 +128,7 @@ func SendEmoteMerge(emote1 datastructure.Emote, emote2 datastructure.Emote, acto
 			"**[activity]** 🔀 [%v](%v) merged the emote [%v](%v) into [%v](%v)",
 			actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex()),
 			emote1.Name, utils.GetEmotePageURL(emote1.ID.Hex()),
-			emote2.Name, utils.GetEmotePageURL(emote1.ID.Hex()),
+			emote2.Name, utils.GetEmotePageURL(emote2.ID.Hex()),
 		),
 		Embeds: []*dgo.MessageEmbed{
 			{
