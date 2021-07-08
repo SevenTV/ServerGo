@@ -19,6 +19,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/v2/rest/restutil"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	"github.com/SevenTV/ServerGo/src/utils"
 	"github.com/SevenTV/ServerGo/src/validation"
@@ -42,20 +43,20 @@ func CreateEmoteRoute(router fiber.Router) {
 		"/",
 		middleware.UserAuthMiddleware(true),
 		middleware.RateLimitMiddleware("emote-create", int32(rl[0]), time.Millisecond*time.Duration(rl[1])),
-		middleware.AuditRoute(func(c *fiber.Ctx) (int, []byte, *datastructure.AuditLog) {
+		func(c *fiber.Ctx) error {
 			c.Set("Content-Type", "application/json")
 			usr, ok := c.Locals("user").(*datastructure.User)
 			if !ok {
-				return 500, errInternalServer, nil
+				return restutil.ErrLoginRequired().Send(c)
 			}
 			if !usr.HasPermission(datastructure.RolePermissionEmoteCreate) {
-				return 403, utils.S2B(fmt.Sprintf(errAccessDenied, "You don't have permission to do that.")), nil
+				return restutil.ErrAccessDenied().Send(c)
 			}
 
 			req := c.Request()
 			fctx := c.Context()
 			if !req.IsBodyStream() {
-				return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "You did not provide an upload stream.")), nil
+				return restutil.ErrBadRequest().Send(c, "Not A File Stream")
 			}
 
 			// Get file stream
@@ -72,7 +73,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			fileDir := fmt.Sprintf("%s/%s", configure.Config.GetString("temp_file_store"), id.String())
 			if err := os.MkdirAll(fileDir, 0777); err != nil {
 				log.WithError(err).Error("mkdir")
-				return 500, errInternalServer, nil
+				return restutil.ErrInternalServer().Send(c)
 			}
 			ogFilePath := fmt.Sprintf("%v/og", fileDir) // The original file's path in temp
 
@@ -91,22 +92,22 @@ func CreateEmoteRoute(router fiber.Router) {
 					buf := make([]byte, 32)
 					n, err := part.Read(buf)
 					if err != nil && err != io.EOF {
-						return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "We couldn't read the name.")), nil
+						return restutil.ErrBadRequest().Send(c, "Emote Name Not Readable")
 					}
 
 					if !validation.ValidateEmoteName(buf[:n]) {
-						return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "Invalid Emote Name")), nil
+						return restutil.ErrBadRequest().Send(c, "Invalid Emote Name")
 					}
 					emoteName = utils.B2S(buf[:n])
 				} else if part.FormName() == "channel" {
 					buf := make([]byte, 64)
 					n, err := part.Read(buf)
 					if err != nil && err != io.EOF {
-						return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "We couldn't read the channel ID.")), nil
+						return restutil.ErrBadRequest().Send(c, "User ID Not Readable")
 					}
 					id, err := primitive.ObjectIDFromHex(utils.B2S(buf[:n]))
 					if err != nil {
-						return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "The channel ID is not valid.")), nil
+						return restutil.ErrBadRequest().Send(c, "Invalid User ID")
 					}
 					channelID = &id
 				} else if part.FormName() == "emote" {
@@ -127,13 +128,13 @@ func CreateEmoteRoute(router fiber.Router) {
 					case "image/webp":
 						ext = "webp"
 					default:
-						return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "The file content type is not supported. It must be one of jpg, png or gif")), nil
+						return restutil.ErrBadRequest().Send(c, "Unsupported File Type (want jpg, png, gif or webp)")
 					}
 
 					osFile, err := os.Create(ogFilePath)
 					if err != nil {
 						log.WithError(err).Error("file")
-						return 500, errInternalServer, nil
+						return restutil.ErrInternalServer().Send(c)
 					}
 
 					byteSize := 0
@@ -141,18 +142,18 @@ func CreateEmoteRoute(router fiber.Router) {
 						n, err := part.Read(data)
 						byteSize += n
 						if byteSize >= MAX_FILE_SIZE {
-							return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "The file is too large.")), nil
+							return restutil.ErrBadRequest().Send(c, "Input File Too Large")
 						}
 
 						if err != nil && err != io.EOF {
 							log.WithError(err).Error("read")
-							return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "We failed to read the file.")), nil
+							return restutil.ErrBadRequest().Send(c, "File Not Readable")
 						}
 						_, err2 := osFile.Write(data[:n])
 						if err2 != nil {
 							osFile.Close()
 							log.WithError(err).Error("write")
-							return 500, errInternalServer, nil
+							return restutil.ErrInternalServer().Send(c)
 						}
 						if err == io.EOF {
 							break
@@ -162,7 +163,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			}
 
 			if emoteName == "" || channelID == nil {
-				return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "The fields were not provided.")), nil
+				return restutil.ErrBadRequest().Send(c, "Uncomplete Form")
 			}
 
 			if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
@@ -172,10 +173,10 @@ func CreateEmoteRoute(router fiber.Router) {
 						"editors": usr.ID,
 					}).Err(); err != nil {
 						if err == mongo.ErrNoDocuments {
-							return 403, utils.S2B(fmt.Sprintf(errAccessDenied, "You don't have permission to do that.")), nil
+							return restutil.ErrAccessDenied().Send(c)
 						}
 						log.WithError(err).Error("mongo")
-						return 500, errInternalServer, nil
+						return restutil.ErrInternalServer().Send(c)
 					}
 				}
 			}
@@ -184,7 +185,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			ogFile, err := os.Open(ogFilePath)
 			if err != nil {
 				log.WithError(err).Error("could not open original file")
-				return 500, errInternalServer, nil
+				return restutil.ErrInternalServer().Send(c)
 			}
 			ogHeight := 0
 			ogWidth := 0
@@ -193,7 +194,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				img, err := jpeg.Decode(ogFile)
 				if err != nil {
 					log.WithError(err).Error("could not decode jpeg")
-					return 400, errInternalServer, nil
+					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Couldn't decode JPEG: %v", err.Error()))
 				}
 				ogWidth = img.Bounds().Dx()
 				ogHeight = img.Bounds().Dy()
@@ -201,7 +202,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				img, err := png.Decode(ogFile)
 				if err != nil {
 					log.WithError(err).Error("could not decode png")
-					return 400, errInternalServer, nil
+					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Couldn't decode PNG: %v", err.Error()))
 				}
 				ogWidth = img.Bounds().Dx()
 				ogHeight = img.Bounds().Dy()
@@ -209,12 +210,12 @@ func CreateEmoteRoute(router fiber.Router) {
 				g, err := gif.DecodeAll(ogFile)
 				if err != nil {
 					log.WithError(err).Error("could not decode gif")
-					return 400, errInternalServer, nil
+					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Couldn't decode GIF: %v", err.Error()))
 				}
 
 				// Set a cap on how many frames are allowed
 				if len(g.Image) > MAX_FRAME_COUNT {
-					return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, fmt.Sprintf("Your GIF exceeds the maximum amount of frames permitted. (%v)", MAX_FRAME_COUNT))), nil
+					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Maximum Frame Count Exceeded (%v)", MAX_FRAME_COUNT))
 				}
 
 				ogWidth, ogHeight = getGifDimensions(g)
@@ -225,15 +226,15 @@ func CreateEmoteRoute(router fiber.Router) {
 					ogHeight = int(wand.GetImageHeight())
 				} else {
 					log.WithError(err).Error("could not decode webp")
-					return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, err.Error())), nil
+					return restutil.ErrBadRequest().Send(c, err.Error())
 				}
 
 				wand.Destroy()
 			default:
-				return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, "Unsupported File Format")), nil
+				return restutil.ErrBadRequest().Send(c, "Unsupported File Format")
 			}
 			if ogWidth > MAX_PIXEL_WIDTH || ogHeight > MAX_PIXEL_HEIGHT {
-				return 400, utils.S2B(fmt.Sprintf(errInvalidRequest, fmt.Sprintf("Too Many Pixels (maximum %dx%d)", MAX_PIXEL_WIDTH, MAX_PIXEL_HEIGHT))), nil
+				return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Too Many Pixels (maximum %dx%d)", MAX_PIXEL_WIDTH, MAX_PIXEL_HEIGHT))
 			}
 
 			files := datastructure.EmoteUtil.GetFilesMeta(fileDir)
@@ -264,7 +265,7 @@ func CreateEmoteRoute(router fiber.Router) {
 					log.WithError(err).Error("SetResourceLimit")
 				}
 				if err := mw.ReadImage(ogFilePath); err != nil {
-					return 500, utils.S2B(fmt.Sprintf(errInvalidRequest, "Couldn't read original image: %s", err)), nil
+					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Input File Not Readable: %s", err))
 				}
 
 				// Merge all frames with coalesce
@@ -311,7 +312,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				err = mw.WriteImages(outFile, true)
 				if err != nil {
 					log.WithError(err).Error("cmd")
-					return 500, errInternalServer, nil
+					return restutil.ErrInternalServer().Send(c)
 				}
 			}
 
@@ -333,7 +334,7 @@ func CreateEmoteRoute(router fiber.Router) {
 
 			if err != nil {
 				log.WithError(err).Error("mongo")
-				return 500, errInternalServer, nil
+				return restutil.ErrInternalServer().Send(c)
 			}
 
 			_id, ok := res.InsertedID.(primitive.ObjectID)
@@ -345,7 +346,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				if err != nil {
 					log.WithError(err).Error("mongo")
 				}
-				return 500, errInternalServer, nil
+				return restutil.ErrInternalServer().Send(c)
 			}
 
 			emote.ID = _id
@@ -377,7 +378,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				if err != nil {
 					log.WithError(err).WithField("id", id).Error("mongo")
 				}
-				return 500, errInternalServer, nil
+				return restutil.ErrInternalServer().Send(c)
 			}
 
 			_, err = mongo.Database.Collection("emotes").UpdateOne(c.Context(), bson.M{
@@ -391,8 +392,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				log.WithError(err).WithField("id", id).Error("mongo")
 			}
 
-			go discord.SendEmoteCreate(*emote, *usr)
-			return 201, utils.S2B(fmt.Sprintf(`{"status":201,"id":"%s"}`, _id.Hex())), &datastructure.AuditLog{
+			_, err = mongo.Database.Collection("audit").InsertOne(c.Context(), &datastructure.AuditLog{
 				Type: datastructure.AuditLogTypeEmoteCreate,
 				Changes: []*datastructure.AuditLogChange{
 					{Key: "name", OldValue: nil, NewValue: emoteName},
@@ -404,8 +404,14 @@ func CreateEmoteRoute(router fiber.Router) {
 				},
 				Target:    &datastructure.Target{ID: &_id, Type: "emotes"},
 				CreatedBy: usr.ID,
+			})
+			if err != nil {
+				log.WithError(err).Error("mongo")
 			}
-		}))
+
+			go discord.SendEmoteCreate(*emote, *usr)
+			return c.SendString(fmt.Sprintf(`{"id":"%v"}`, emote.ID.Hex()))
+		})
 }
 
 func getGifDimensions(gif *gif.GIF) (x, y int) {

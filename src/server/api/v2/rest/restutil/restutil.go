@@ -35,6 +35,9 @@ var (
 	ErrUnknownUser        = func() *ErrorResponse { return createErrorResponse(404, "Unknown User") }
 	MalformedObjectId     = func() *ErrorResponse { return createErrorResponse(400, "Malformed Object ID") }
 	ErrInternalServer     = func() *ErrorResponse { return createErrorResponse(500, "Internal Server Error (%s)") }
+	ErrBadRequest         = func() *ErrorResponse { return createErrorResponse(400, "Bad Request (%s)") }
+	ErrLoginRequired      = func() *ErrorResponse { return createErrorResponse(403, "Authentication Required") }
+	ErrAccessDenied       = func() *ErrorResponse { return createErrorResponse(403, "Insufficient Privilege") }
 	ErrMissingQueryParams = func() *ErrorResponse { return createErrorResponse(400, "Missing Query Params (%s)") }
 )
 
