@@ -241,14 +241,38 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 	}
 
 	// Get the users with this emote
-	if cur, err := mongo.Database.Collection("users").Find(ctx, bson.M{
-		"emotes": bson.M{
-			"$in": []primitive.ObjectID{emote.ID},
+	pipeline := mongo.Pipeline{
+		bson.D{
+			bson.E{
+				Key: "$match",
+				Value: bson.M{
+					"emotes": bson.M{"$in": []primitive.ObjectID{emote.ID}},
+				},
+			},
 		},
-	}, &options.FindOptions{
-		Skip:  utils.Int64Pointer(int64((page - 1) * limit)),
-		Limit: utils.Int64Pointer(int64(limit)),
-	}); err != nil {
+		bson.D{bson.E{
+			Key: "$set",
+			Value: bson.M{
+				"role": bson.M{"$ifNull": bson.A{"$role", datastructure.DefaultRole.ID}},
+			},
+		}},
+		bson.D{
+			bson.E{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "roles",
+					"localField":   "role",
+					"foreignField": "_id",
+					"as":           "_role",
+				},
+			},
+		},
+		bson.D{bson.E{Key: "$sort", Value: bson.M{"_role.position": -1}}},
+		bson.D{bson.E{Key: "$skip", Value: utils.Int64Pointer(int64((page - 1) * limit))}},
+		bson.D{bson.E{Key: "$limit", Value: utils.Int64Pointer(int64(limit))}},
+	}
+
+	if cur, err := mongo.Database.Collection("users").Aggregate(ctx, pipeline); err != nil {
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
 	} else {
