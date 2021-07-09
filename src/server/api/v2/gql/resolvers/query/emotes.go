@@ -58,14 +58,6 @@ func GenerateEmoteResolver(ctx context.Context, emote *datastructure.Emote, emot
 	if emote.Channels == nil {
 		if _, ok := fields["channels"]; ok {
 			emote.Channels = &[]*datastructure.User{}
-
-			if err := cache.Find(ctx, "users", fmt.Sprintf("emotes:%s", emote.ID.Hex()), bson.M{
-				"emotes": bson.M{
-					"$in": []primitive.ObjectID{emote.ID},
-				},
-			}, emote.Channels); err != nil {
-				return nil, resolvers.ErrInternalServer
-			}
 		}
 	}
 
@@ -211,9 +203,50 @@ func (r *EmoteResolver) AuditEntries() (*[]*auditResolver, error) {
 	return &resolvers, nil
 }
 
-func (r *EmoteResolver) Channels() (*[]*UserResolver, error) {
-	if r.v.Channels == nil {
-		return nil, nil
+func (r *EmoteResolver) Channels(ctx context.Context, args struct {
+	Page  *int32
+	Limit *int32
+}) (*[]*UserResolver, error) {
+	emote := r.v
+
+	// Get queried page
+	page := int32(1)
+	if args.Page != nil {
+		page = *args.Page
+		if page < 1 {
+			return nil, fmt.Errorf("Page must be 1 or higher")
+		}
+	}
+
+	// Define limit
+	limit := int32(20)
+	if args.Limit != nil {
+		limit = *args.Limit
+		if limit < 1 {
+			return nil, fmt.Errorf("Limit cannot be less than 1")
+		}
+		if limit > 250 {
+			return nil, fmt.Errorf("Limit cannot be more than 250")
+		}
+	}
+
+	// Get the users with this emote
+	if cur, err := mongo.Database.Collection("users").Find(ctx, bson.M{
+		"emotes": bson.M{
+			"$in": []primitive.ObjectID{emote.ID},
+		},
+	}, &options.FindOptions{
+		Skip:  utils.Int64Pointer(int64((page - 1) * limit)),
+		Limit: utils.Int64Pointer(int64(limit)),
+	}); err != nil {
+		log.WithError(err).Error("mongo")
+		return nil, resolvers.ErrInternalServer
+	} else {
+		err = cur.All(ctx, emote.Channels)
+		if err != nil {
+			log.WithError(err).Error("mongo")
+			return nil, err
+		}
 	}
 
 	u := *r.v.Channels
