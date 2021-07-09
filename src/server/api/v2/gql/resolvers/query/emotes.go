@@ -226,7 +226,7 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 	if args.Page != nil {
 		page = *args.Page
 		if page < 1 {
-			return nil, fmt.Errorf("Page must be 1 or higher")
+			page = 1
 		}
 	}
 
@@ -234,11 +234,8 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 	limit := int32(20)
 	if args.Limit != nil {
 		limit = *args.Limit
-		if limit < 1 {
-			return nil, fmt.Errorf("Limit cannot be less than 1")
-		}
-		if limit > 250 {
-			return nil, fmt.Errorf("Limit cannot be more than 250")
+		if limit < 1 || limit > 250 {
+			limit = 250
 		}
 	}
 
