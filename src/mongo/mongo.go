@@ -77,6 +77,7 @@ func init() {
 		{Keys: bson.M{"login": 1}, Options: options.Index().SetUnique(true)},
 		{Keys: bson.M{"rank": 1}},
 		{Keys: bson.M{"editors": 1}},
+		{Keys: bson.M{"emotes": 1}},
 	})
 	if err != nil {
 		log.WithError(err).Fatal("mongo")
