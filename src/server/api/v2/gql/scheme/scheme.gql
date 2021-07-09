@@ -140,8 +140,6 @@ input ThirdPartyEmoteOptions {
 }
 
 type Emote {
-  # Get the channels the emote is added to
-  channels(page: Int, limit: Int): [UserPartial]
   # Id of the emote
   id: String!
   # name of the emote
@@ -160,6 +158,10 @@ type Emote {
   created_at: String!
   # Get audit log entries for this emote.
   audit_entries: [AuditLog!]
+  # Get the channels the emote is added to
+  channels(page: Int, limit: Int): [UserPartial]
+  # Get the amount of channels the emote is added to
+  channel_count: Int!
   # Get the owner of this emote.
   owner: User
   # Get the reports on emote. Requries Permission.

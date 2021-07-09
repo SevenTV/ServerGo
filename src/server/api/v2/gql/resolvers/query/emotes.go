@@ -61,6 +61,20 @@ func GenerateEmoteResolver(ctx context.Context, emote *datastructure.Emote, emot
 		}
 	}
 
+	if emote.ChannelCount == nil {
+		// Get count of notifications
+		count, err := cache.GetCollectionSize(ctx, "users", bson.M{
+			"emotes": bson.M{
+				"$in": []primitive.ObjectID{emote.ID},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		emote.ChannelCount = utils.Int32Pointer(int32(count))
+	}
+
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
 	if v, ok := fields["reports"]; ok && usrValid && (usr.Rank != datastructure.UserRankAdmin && usr.Rank != datastructure.UserRankModerator) && emote.Reports == nil {
 		emote.Reports = &[]*datastructure.Report{}
@@ -146,10 +160,6 @@ func (r *EmoteResolver) Tags() []string {
 
 func (r *EmoteResolver) CreatedAt() string {
 	return r.v.ID.Timestamp().Format(time.RFC3339)
-}
-
-func (r *EmoteResolver) ChannelCount() int32 {
-	return *r.v.ChannelCount
 }
 
 func (r *EmoteResolver) Owner() (*UserResolver, error) {
@@ -261,6 +271,10 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 	}
 
 	return &users, nil
+}
+
+func (r *EmoteResolver) ChannelCount() int32 {
+	return *r.v.ChannelCount
 }
 
 func (r *EmoteResolver) Reports() (*[]*reportResolver, error) {
