@@ -24,7 +24,9 @@ func (*MutationResolver) EditApp(ctx context.Context, args struct {
 
 	// Edit featured broadcast
 	if args.Properties.FeaturedBroadcast != nil {
-		redis.Client.Set(ctx, "meta:featured_broadcast", *args.Properties.FeaturedBroadcast, 0)
+		if err := redis.Client.Set(ctx, "meta:featured_broadcast", *args.Properties.FeaturedBroadcast, 0).Err(); err != nil {
+			return nil, err
+		}
 	}
 
 	return &response{}, nil
