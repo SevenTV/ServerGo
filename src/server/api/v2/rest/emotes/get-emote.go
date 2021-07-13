@@ -85,6 +85,7 @@ func GetEmoteRoute(router fiber.Router) {
 
 		// Create a new magick wand
 		wand := imagick.NewMagickWand()
+		defer wand.Destroy()
 
 		// Get CDN URL
 		url := utils.GetCdnURL(emoteID, 3)
