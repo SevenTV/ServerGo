@@ -34,6 +34,8 @@ type Mutation {
   unbanUser(victim_id: String!, reason: String): Response
   # Mark a notification as read
   markNotificationsRead(notification_ids: [String!]!): Response
+  # Edit the application
+  editApp(properties: MetaInput!): Response
 }
 
 type Response {
@@ -104,6 +106,10 @@ input UserInput {
 
 input ChannelEmoteInput {
   alias: String
+}
+
+input MetaInput {
+  featured_broadcast: String
 }
 
 type AuditLog {
