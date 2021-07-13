@@ -29,7 +29,10 @@ func (*MutationResolver) EditApp(ctx context.Context, args struct {
 		}
 	}
 
-	return &response{}, nil
+	return &response{
+		Message: "OK",
+		Status:  200,
+	}, nil
 }
 
 type MetaInput struct {
