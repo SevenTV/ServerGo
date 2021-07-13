@@ -45,7 +45,7 @@ func GetEmoteURLs(emote Emote) [][]string {
 	for i := 1; i <= 4; i++ {
 		a := make([]string, 2)
 		a[0] = fmt.Sprintf("%d", i)
-		a[1] = utils.GetCdnURL(emote.ID.Hex(), int8(i))
+		a[1] = utils.GetCdnURL(emote.ID.Hex(), uint8(i))
 
 		result[i-1] = a
 	}

@@ -337,7 +337,7 @@ func (r *EmoteResolver) URLs() [][]string {
 		for i := 1; i <= 4; i++ {
 			a := make([]string, 2)
 			a[0] = fmt.Sprintf("%d", i)
-			a[1] = utils.GetCdnURL(r.v.ID.Hex(), int8(i))
+			a[1] = utils.GetCdnURL(r.v.ID.Hex(), uint8(i))
 
 			result[i-1] = a
 		}

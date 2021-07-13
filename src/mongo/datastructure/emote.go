@@ -22,7 +22,7 @@ func (*emoteUtil) AddSizeMetadata(emote *Emote) ([4]int16, [4]int16, error) {
 	height := [4]int16{0, 0, 0, 0}
 
 	for i := int8(1); i <= 4; i++ {
-		url := utils.GetCdnURL(emote.ID.Hex(), i)
+		url := utils.GetCdnURL(emote.ID.Hex(), uint8(i))
 
 		// Fetch emote data from the CDN
 		res, err := http.Get(url)
