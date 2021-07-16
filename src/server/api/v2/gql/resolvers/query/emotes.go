@@ -241,45 +241,58 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 
 	// Get the users with this emote
 	pipeline := mongo.Pipeline{
-		bson.D{
-			bson.E{
-				Key: "$match",
-				Value: bson.M{
-					"emotes": bson.M{"$in": []primitive.ObjectID{emote.ID}},
-				},
-			},
-		},
-		bson.D{bson.E{
-			Key: "$set",
+		bson.D{{
+			Key: "$match",
 			Value: bson.M{
-				"role": bson.M{"$ifNull": bson.A{"$role", datastructure.DefaultRole.ID}},
+				"emotes": bson.M{"$in": []primitive.ObjectID{emote.ID}},
 			},
 		}},
-		bson.D{
-			bson.E{
-				Key: "$lookup",
-				Value: bson.M{
-					"from":         "roles",
-					"localField":   "role",
-					"foreignField": "_id",
-					"as":           "_role",
+		bson.D{{
+			Key: "$lookup",
+			Value: bson.M{
+				"from":         "roles",
+				"localField":   "role",
+				"foreignField": "_id",
+				"as":           "_role",
+			},
+		}},
+		bson.D{{
+			Key: "$facet",
+			Value: bson.D{
+				{
+					Key: "user",
+					Value: bson.A{
+						bson.D{{Key: "$sort", Value: bson.M{"_role.position": -1}}},
+					},
 				},
 			},
-		},
-		bson.D{bson.E{Key: "$sort", Value: bson.M{"_role.position": -1}}},
-		bson.D{bson.E{Key: "$skip", Value: utils.Int64Pointer(int64((page - 1) * limit))}},
-		bson.D{bson.E{Key: "$limit", Value: utils.Int64Pointer(int64(limit))}},
+		}},
+		bson.D{{Key: "$unwind", Value: "$user"}},
+		bson.D{{Key: "$skip", Value: utils.Int64Pointer(int64((page - 1) * limit))}},
+		bson.D{{Key: "$limit", Value: utils.Int64Pointer(int64(limit))}},
 	}
 
 	if cur, err := mongo.Database.Collection("users").Aggregate(ctx, pipeline); err != nil {
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
 	} else {
-		err = cur.All(ctx, emote.Channels)
+		cur.Next(ctx)
+		fmt.Println(cur.Current)
+
+		out := []struct {
+			User *datastructure.User `bson:"user"`
+		}{}
+		err = cur.All(ctx, &out)
 		if err != nil {
 			log.WithError(err).Error("mongo")
 			return nil, err
 		}
+
+		list := make([]*datastructure.User, len(out))
+		for i, v := range out {
+			list[i] = v.User
+		}
+		emote.Channels = &list
 	}
 
 	u := *r.v.Channels
