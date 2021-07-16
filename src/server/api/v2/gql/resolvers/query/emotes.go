@@ -61,20 +61,18 @@ func GenerateEmoteResolver(ctx context.Context, emote *datastructure.Emote, emot
 		}
 	}
 
-	if emote.ChannelCount == nil {
-		if _, ok := fields["channel_count"]; ok {
-			// Get count of notifications
-			count, err := cache.GetCollectionSize(ctx, "users", bson.M{
-				"emotes": bson.M{
-					"$in": []primitive.ObjectID{emote.ID},
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			emote.ChannelCount = utils.Int32Pointer(int32(count))
+	if _, ok := fields["channel_count"]; ok {
+		// Get count of notifications
+		count, err := cache.GetCollectionSize(ctx, "users", bson.M{
+			"emotes": bson.M{
+				"$in": []primitive.ObjectID{emote.ID},
+			},
+		})
+		if err != nil {
+			return nil, err
 		}
+
+		emote.ChannelCount = utils.Int32Pointer(int32(count))
 	}
 
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
