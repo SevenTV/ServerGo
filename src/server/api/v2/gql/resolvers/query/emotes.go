@@ -239,13 +239,13 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 
 	// Get the users with this emote
 	pipeline := mongo.Pipeline{
-		bson.D{{
+		bson.D{{ // Step 1: Query for users with the emote enabled
 			Key: "$match",
 			Value: bson.M{
 				"emotes": bson.M{"$in": []primitive.ObjectID{emote.ID}},
 			},
 		}},
-		bson.D{{
+		bson.D{{ // Step 2: Add users' role data
 			Key: "$lookup",
 			Value: bson.M{
 				"from":         "roles",
@@ -254,7 +254,7 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 				"as":           "_role",
 			},
 		}},
-		bson.D{{
+		bson.D{{ // Step 3: Perform a sort by role position
 			Key: "$facet",
 			Value: bson.D{
 				{
@@ -265,7 +265,9 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 				},
 			},
 		}},
-		bson.D{{Key: "$unwind", Value: "$user"}},
+		bson.D{{Key: "$unwind", Value: "$user"}}, // Step 4: unwind the array
+
+		// Paginate
 		bson.D{{Key: "$skip", Value: utils.Int64Pointer(int64((page - 1) * limit))}},
 		bson.D{{Key: "$limit", Value: utils.Int64Pointer(int64(limit))}},
 	}
@@ -274,18 +276,17 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
 	} else {
-		cur.Next(ctx)
-		fmt.Println(cur.Current)
-
-		out := []struct {
+		out := []struct { // The output data
 			User *datastructure.User `bson:"user"`
 		}{}
+
 		err = cur.All(ctx, &out)
 		if err != nil {
 			log.WithError(err).Error("mongo")
 			return nil, err
 		}
 
+		// Add output data to the emote's channels
 		list := make([]*datastructure.User, len(out))
 		for i, v := range out {
 			list[i] = v.User
