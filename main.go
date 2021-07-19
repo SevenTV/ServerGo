@@ -35,7 +35,7 @@ func main() {
 		configCode = 0
 	}
 
-	c := make(chan os.Signal, 1)
+	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	s := server.New()
