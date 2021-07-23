@@ -168,7 +168,7 @@ func CreateEmoteRoute(router fiber.Router) {
 
 			if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
 				if channelID.Hex() != usr.ID.Hex() {
-					if err := mongo.Database.Collection("users").FindOne(c.Context(), bson.M{
+					if err := mongo.Collection(mongo.CollectionNameUsers).FindOne(c.Context(), bson.M{
 						"_id":     channelID,
 						"editors": usr.ID,
 					}).Err(); err != nil {
@@ -330,7 +330,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				Width:            sizeX,
 				Height:           sizeY,
 			}
-			res, err := mongo.Database.Collection("emotes").InsertOne(c.Context(), emote)
+			res, err := mongo.Collection(mongo.CollectionNameEmotes).InsertOne(c.Context(), emote)
 
 			if err != nil {
 				log.WithError(err).Error("mongo")
@@ -340,7 +340,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			_id, ok := res.InsertedID.(primitive.ObjectID)
 			if !ok {
 				log.WithField("resp", res.InsertedID).Error("bad resp from mongo")
-				_, err := mongo.Database.Collection("emotes").DeleteOne(c.Context(), bson.M{
+				_, err := mongo.Collection(mongo.CollectionNameEmotes).DeleteOne(c.Context(), bson.M{
 					"_id": res.InsertedID,
 				})
 				if err != nil {
@@ -372,7 +372,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			wg.Wait()
 
 			if errored {
-				_, err := mongo.Database.Collection("emotes").DeleteOne(c.Context(), bson.M{
+				_, err := mongo.Collection(mongo.CollectionNameEmotes).DeleteOne(c.Context(), bson.M{
 					"_id": _id,
 				})
 				if err != nil {
@@ -381,7 +381,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				return restutil.ErrInternalServer().Send(c)
 			}
 
-			_, err = mongo.Database.Collection("emotes").UpdateOne(c.Context(), bson.M{
+			_, err = mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(c.Context(), bson.M{
 				"_id": _id,
 			}, bson.M{
 				"$set": bson.M{
@@ -392,7 +392,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				log.WithError(err).WithField("id", id).Error("mongo")
 			}
 
-			_, err = mongo.Database.Collection("audit").InsertOne(c.Context(), &datastructure.AuditLog{
+			_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(c.Context(), &datastructure.AuditLog{
 				Type: datastructure.AuditLogTypeEmoteCreate,
 				Changes: []*datastructure.AuditLogChange{
 					{Key: "name", OldValue: nil, NewValue: emoteName},

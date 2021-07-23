@@ -447,7 +447,7 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 	f.Response().Header.Add("X-Collection-Size", fmt.Sprint(count))
 
 	// Query the DB
-	cur, err := mongo.Database.Collection("emotes").Aggregate(ctx, pipeline, opts)
+	cur, err := mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, pipeline, opts)
 
 	if err == nil {
 		err = cur.All(ctx, &emotes)
@@ -581,7 +581,7 @@ func (*QueryResolver) SearchUsers(ctx context.Context, args struct {
 			"$regex": lQuery,
 		},
 	}
-	cur, err := mongo.Database.Collection("users").Find(ctx, match, opts)
+	cur, err := mongo.Collection(mongo.CollectionNameUsers).Find(ctx, match, opts)
 	if err == nil {
 		err = cur.All(ctx, &users)
 	}

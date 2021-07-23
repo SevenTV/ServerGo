@@ -54,7 +54,7 @@ func (*MutationResolver) BanUser(ctx context.Context, args struct {
 	}
 
 	// Find user
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": id,
 	})
 	user := &datastructure.User{}
@@ -96,7 +96,7 @@ func (*MutationResolver) BanUser(ctx context.Context, args struct {
 		ExpireAt:   expireAt,
 	}
 
-	_, err = mongo.Database.Collection("bans").InsertOne(ctx, ban)
+	_, err = mongo.Collection(mongo.CollectionNameBans).InsertOne(ctx, ban)
 	if err != nil {
 		log.Errorf("mongo, err=%v", err)
 		return nil, resolvers.ErrInternalServer
@@ -108,7 +108,7 @@ func (*MutationResolver) BanUser(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserBan,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &id, Type: "users"},
@@ -161,7 +161,7 @@ func (*MutationResolver) UnbanUser(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": id,
 	})
 
@@ -181,7 +181,7 @@ func (*MutationResolver) UnbanUser(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("bans").UpdateMany(ctx, bson.M{
+	_, err = mongo.Collection(mongo.CollectionNameBans).UpdateMany(ctx, bson.M{
 		"user_id": user.ID,
 		"active":  true,
 	}, bson.M{
@@ -200,7 +200,7 @@ func (*MutationResolver) UnbanUser(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserUnban,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &id, Type: "users"},

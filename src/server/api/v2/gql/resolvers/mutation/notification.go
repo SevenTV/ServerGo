@@ -33,7 +33,7 @@ func (*MutationResolver) MarkNotificationsRead(ctx context.Context, args struct 
 	}
 
 	// Get the requested notification
-	res, err := mongo.Database.Collection("notifications_read").UpdateMany(ctx, bson.M{
+	res, err := mongo.Collection(mongo.CollectionNameNotificationsRead).UpdateMany(ctx, bson.M{
 		"notification": bson.M{
 			"$in": ids,
 		},

@@ -63,7 +63,7 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 	}
 
 	// Write the notification
-	if d, err := mongo.Database.Collection("notifications").UpdateByID(ctx, b.Notification.ID, bson.M{
+	if d, err := mongo.Collection(mongo.CollectionNameNotifications).UpdateByID(ctx, b.Notification.ID, bson.M{
 		"$set": b.Notification,
 	}, &options.UpdateOptions{
 		Upsert: &upsert,
@@ -85,7 +85,7 @@ func (b NotificationBuilder) Write(ctx context.Context) error {
 		}
 
 		// Write the read states to database
-		if _, err := mongo.Database.Collection("notifications_read").InsertMany(ctx, readStates); err != nil {
+		if _, err := mongo.Collection(mongo.CollectionNameNotificationsRead).InsertMany(ctx, readStates); err != nil {
 			log.WithError(err).Error("mongo")
 		}
 	}

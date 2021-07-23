@@ -163,7 +163,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 	if _, ok := fields["editor_in"]; ok && user.EditorIn == nil {
 		user.EditorIn = &[]*datastructure.User{}
 
-		if cur, err := mongo.Database.Collection("users").Find(ctx, bson.M{
+		if cur, err := mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 			"editors": user.ID,
 		}); err != nil {
 			log.WithError(err).Error("mongo")
@@ -221,7 +221,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 
 	if _, ok := fields["bans"]; ok && usrValid && usr.HasPermission(datastructure.RolePermissionBanUsers) && user.Bans == nil {
 		user.Bans = &[]*datastructure.Ban{}
-		res, err := mongo.Database.Collection("bans").Find(ctx, bson.M{
+		res, err := mongo.Collection(mongo.CollectionNameBans).Find(ctx, bson.M{
 			"user_id": user.ID,
 		})
 		if err != nil {
@@ -290,7 +290,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 				},
 			},
 		}
-		cur, err := mongo.Database.Collection("notifications_read").Aggregate(ctx, pipeline)
+		cur, err := mongo.Collection(mongo.CollectionNameNotificationsRead).Aggregate(ctx, pipeline)
 		if err != nil {
 			return nil, err
 		}
@@ -554,7 +554,7 @@ func (r *UserResolver) Banned() bool {
 
 func (r *UserResolver) AuditEntries() (*[]*auditResolver, error) {
 	var logs []*datastructure.AuditLog
-	if cur, err := mongo.Database.Collection("audit").Find(r.ctx, bson.M{
+	if cur, err := mongo.Collection(mongo.CollectionNameAudit).Find(r.ctx, bson.M{
 		"target.type": "users",
 		"target.id":   r.v.ID,
 	}, &options.FindOptions{

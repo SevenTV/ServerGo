@@ -33,7 +33,7 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 		return nil, err
 	}
 	var target *datastructure.User
-	if err := mongo.Database.Collection("users").FindOne(ctx, bson.M{"_id": targetID}).Decode(&target); err != nil {
+	if err := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": targetID}).Decode(&target); err != nil {
 		return nil, err
 	}
 	// Get target's role
@@ -137,7 +137,7 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 	var user *datastructure.User
 	if len(logChanges) > 0 {
 		after := options.After
-		doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+		doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 			"_id": targetID,
 		}, bson.M{
 			"$set": update,
@@ -148,7 +148,7 @@ func (*MutationResolver) EditUser(ctx context.Context, args struct {
 			return nil, resolvers.ErrInternalServer
 		}
 
-		_, err := mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+		_, err := mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 			Type:      datastructure.AuditLogTypeUserEdit,
 			CreatedBy: usr.ID,
 			Target:    &datastructure.Target{ID: &targetID, Type: "users"},

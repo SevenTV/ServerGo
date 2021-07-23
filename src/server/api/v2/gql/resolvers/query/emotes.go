@@ -176,7 +176,7 @@ func (r *EmoteResolver) Owner() (*UserResolver, error) {
 
 func (r *EmoteResolver) AuditEntries() (*[]*auditResolver, error) {
 	var logs []*datastructure.AuditLog
-	if cur, err := mongo.Database.Collection("audit").Find(r.ctx, bson.M{
+	if cur, err := mongo.Collection(mongo.CollectionNameAudit).Find(r.ctx, bson.M{
 		"target.type": "emotes",
 		"target.id":   r.v.ID,
 	}, &options.FindOptions{
@@ -272,7 +272,7 @@ func (r *EmoteResolver) Channels(ctx context.Context, args struct {
 		bson.D{{Key: "$limit", Value: utils.Int64Pointer(int64(limit))}},
 	}
 
-	if cur, err := mongo.Database.Collection("users").Aggregate(ctx, pipeline); err != nil {
+	if cur, err := mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, pipeline); err != nil {
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
 	} else {

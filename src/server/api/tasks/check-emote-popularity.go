@@ -66,7 +66,7 @@ func CheckEmotesPopularity(ctx context.Context) error {
 				},
 			},
 		}
-		cur, err := mongo.Database.Collection("emotes").Aggregate(ctx, popCheck)
+		cur, err := mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, popCheck)
 		if err != nil {
 			log.WithError(err).Error("mongo")
 			return err
@@ -104,7 +104,7 @@ func CheckEmotesPopularity(ctx context.Context) error {
 				}
 
 				// Update unchecked with channel count data
-				_, err := mongo.Database.Collection("emotes").BulkWrite(ctx, ops)
+				_, err := mongo.Collection(mongo.CollectionNameEmotes).BulkWrite(ctx, ops)
 				if err != nil {
 					log.WithError(err).WithField("count", len(countedEmotes)).Error("mongo was unable to update channel count emotes")
 				}

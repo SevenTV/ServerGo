@@ -63,7 +63,7 @@ func (*MutationResolver) AddChannelEditor(ctx context.Context, args struct {
 		return nil, resolvers.ErrUserBanned
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": channelID,
 	})
 
@@ -95,7 +95,7 @@ func (*MutationResolver) AddChannelEditor(ctx context.Context, args struct {
 
 	var newChannel *datastructure.User
 	after := options.After
-	doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
 	}, bson.M{
 		"$addToSet": bson.M{
@@ -113,7 +113,7 @@ func (*MutationResolver) AddChannelEditor(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserChannelEditorAdd,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &channelID, Type: "users"},
@@ -161,7 +161,7 @@ func (*MutationResolver) RemoveChannelEditor(ctx context.Context, args struct {
 		return nil, resolvers.ErrUserBanned
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": channelID,
 	})
 
@@ -193,7 +193,7 @@ func (*MutationResolver) RemoveChannelEditor(ctx context.Context, args struct {
 
 	var newChannel *datastructure.User
 	after := options.After
-	doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
 	}, bson.M{
 		"$pull": bson.M{
@@ -211,7 +211,7 @@ func (*MutationResolver) RemoveChannelEditor(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserChannelEditorRemove,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &channelID, Type: "users"},

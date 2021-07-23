@@ -48,7 +48,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrUserBanned
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": channelID,
 	})
 
@@ -97,7 +97,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		}
 	}
 
-	emoteRes := mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
+	emoteRes := mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id":    emoteID,
 		"status": datastructure.EmoteStatusLive,
 	})
@@ -128,7 +128,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 
 	emoteIDs := append(channel.EmoteIDs, emoteID)
 	after := options.After
-	doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
 	}, bson.M{
 		"$set": bson.M{
@@ -146,7 +146,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserChannelEmoteAdd,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &channelID, Type: "users"},
@@ -209,7 +209,7 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrUserBanned
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": channelID,
 	})
 	channel := &datastructure.User{}
@@ -286,7 +286,7 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 
 	fmt.Println("alias:", update, args.Data.Alias)
 	after := options.After
-	doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
 	}, update, &options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
@@ -300,7 +300,7 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserChannelEmoteEdit,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &channelID, Type: "users"},
@@ -358,7 +358,7 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrUserBanned
 	}
 
-	res := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": channelID,
 	})
 
@@ -414,7 +414,7 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 	}
 
 	after := options.After
-	doc := mongo.Database.Collection("users").FindOneAndUpdate(ctx, bson.M{
+	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
 	}, bson.M{
 		"$set": bson.M{
@@ -432,7 +432,7 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeUserChannelEmoteRemove,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &channelID, Type: "users"},

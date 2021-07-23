@@ -15,7 +15,7 @@ import (
 )
 
 func (*emotes) Delete(ctx context.Context, emote *datastructure.Emote) error {
-	_, err := mongo.Database.Collection("emotes").UpdateOne(ctx, bson.M{
+	_, err := mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
 		"_id": emote.ID,
 	}, bson.M{
 		"$set": bson.M{
@@ -42,7 +42,7 @@ func (*emotes) Delete(ctx context.Context, emote *datastructure.Emote) error {
 		}(i)
 	}
 
-	_, err = mongo.Database.Collection("users").UpdateMany(ctx, bson.M{
+	_, err = mongo.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
 		"emotes": emote.ID,
 	}, bson.M{
 		"$pull": bson.M{

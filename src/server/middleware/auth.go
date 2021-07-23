@@ -82,7 +82,7 @@ func UserAuthMiddleware(required bool) func(c *fiber.Ctx) error {
 			query["token_version"] = pl.TokenVersion
 		}
 
-		res := mongo.Database.Collection("users").FindOne(c.Context(), query)
+		res := mongo.Collection(mongo.CollectionNameUsers).FindOne(c.Context(), query)
 
 		err := res.Err()
 		if err != nil {

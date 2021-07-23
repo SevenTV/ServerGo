@@ -32,7 +32,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 		oldEmote datastructure.Emote
 		newEmote datastructure.Emote
 	)
-	res := mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id": opts.OldID,
 	})
 	if res.Err() != nil {
@@ -41,7 +41,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 	if err := res.Decode(&oldEmote); err != nil {
 		return nil, err
 	}
-	res = mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
+	res = mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id": opts.NewID,
 	})
 	if err := res.Decode(&newEmote); err != nil {
@@ -54,7 +54,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 		var channels []*datastructure.User
 
 		// Fetch all users with the emote enabled
-		cur, err := mongo.Database.Collection("users").Find(ctx, bson.M{
+		cur, err := mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 			"emotes": bson.M{
 				"$in": []primitive.ObjectID{oldEmote.ID},
 			},
@@ -112,7 +112,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 
 	// Update the users
 	if len(userOps) > 0 {
-		result, err := mongo.Database.Collection("users").BulkWrite(ctx, userOps)
+		result, err := mongo.Collection(mongo.CollectionNameUsers).BulkWrite(ctx, userOps)
 		if err != nil {
 			log.WithError(err).WithField("count", len(userOps)).Error("mongo, failed to update users during emote merger")
 			return nil, err
@@ -192,7 +192,7 @@ func (*emotes) MergeEmote(ctx context.Context, opts MergeEmoteOptions) (*datastr
 	}
 
 	// Create an Audit Log
-	_, err := mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err := mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeEmoteMerge,
 		CreatedBy: opts.Actor.ID,
 		Target:    &datastructure.Target{ID: &oldEmote.ID, Type: "emotes"},

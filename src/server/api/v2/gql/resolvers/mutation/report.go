@@ -31,7 +31,7 @@ func (*MutationResolver) ReportEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrUnknownEmote
 	}
 
-	res := mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id":    id,
 		"status": datastructure.EmoteStatusLive,
 	})
@@ -53,7 +53,7 @@ func (*MutationResolver) ReportEmote(ctx context.Context, args struct {
 
 	opts := options.Update().SetUpsert(true)
 
-	_, err = mongo.Database.Collection("reports").UpdateOne(ctx, bson.M{
+	_, err = mongo.Collection(mongo.CollectionNameReports).UpdateOne(ctx, bson.M{
 		"target.id":   emote.ID,
 		"target.type": "emotes",
 		"cleared":     false,
@@ -72,7 +72,7 @@ func (*MutationResolver) ReportEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeReport,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &id, Type: "emotes"},
@@ -142,7 +142,7 @@ func (*MutationResolver) ReportUser(ctx context.Context, args struct {
 
 	opts := options.Update().SetUpsert(true)
 
-	_, err = mongo.Database.Collection("reports").UpdateOne(ctx, bson.M{
+	_, err = mongo.Collection(mongo.CollectionNameReports).UpdateOne(ctx, bson.M{
 		"target.id":   user.ID,
 		"target.type": "users",
 		"cleared":     false,
@@ -161,7 +161,7 @@ func (*MutationResolver) ReportUser(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+	_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 		Type:      datastructure.AuditLogTypeReport,
 		CreatedBy: usr.ID,
 		Target:    &datastructure.Target{ID: &id, Type: "emotes"},

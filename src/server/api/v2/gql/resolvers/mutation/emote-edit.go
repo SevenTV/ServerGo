@@ -74,7 +74,7 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 		return nil, resolvers.ErrUnknownEmote
 	}
 
-	res := mongo.Database.Collection("emotes").FindOne(ctx, bson.M{
+	res := mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id": id,
 	})
 
@@ -95,7 +95,7 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 
 	if !usr.HasPermission(datastructure.RolePermissionEmoteEditAll) {
 		if emote.OwnerID.Hex() != usr.ID.Hex() {
-			if err := mongo.Database.Collection("users").FindOne(ctx, bson.M{
+			if err := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 				"_id":     emote.OwnerID,
 				"editors": usr.ID,
 			}).Err(); err != nil {
@@ -167,7 +167,7 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 
 		oldVisibility := emote.Visibility
 		after := options.After
-		doc := mongo.Database.Collection("emotes").FindOneAndUpdate(ctx, bson.M{
+		doc := mongo.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(ctx, bson.M{
 			"_id": id,
 		}, bson.M{
 			"$set": update,
@@ -184,7 +184,7 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 			return nil, resolvers.ErrInternalServer
 		}
 
-		_, err = mongo.Database.Collection("audit").InsertOne(ctx, &datastructure.AuditLog{
+		_, err = mongo.Collection(mongo.CollectionNameAudit).InsertOne(ctx, &datastructure.AuditLog{
 			Type:      datastructure.AuditLogTypeEmoteEdit,
 			CreatedBy: usr.ID,
 			Target:    &datastructure.Target{ID: &id, Type: "emotes"},
