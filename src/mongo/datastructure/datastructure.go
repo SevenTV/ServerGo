@@ -167,8 +167,8 @@ type Role struct {
 	Color    int32               `json:"color" bson:"color"`
 	Allowed  int64               `json:"allowed" bson:"allowed"`
 	Denied   int64               `json:"denied" bson:"denied"`
-	Default  bool                `json:"default" bson:"default"`
-	Badge    *primitive.ObjectID `json:"badge" bson:"badge"`
+	Default  bool                `json:"default,omitempty" bson:"default"`
+	Badge    *primitive.ObjectID `json:"badge,omitempty" bson:"badge,omitempty"`
 }
 
 // Get a cached role by ID

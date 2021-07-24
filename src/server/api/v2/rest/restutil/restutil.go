@@ -64,7 +64,7 @@ func CreateEmoteResponse(emote *datastructure.Emote, owner *datastructure.User) 
 		VisibilitySimple: &simpleVis,
 		Mime:             emote.Mime,
 		Status:           emote.Status,
-		Tags:             emote.Tags,
+		Tags:             utils.Ternary(emote.Tags != nil, emote.Tags, []string{}).([]string),
 		Width:            emote.Width,
 		Height:           emote.Height,
 		URLs:             urls,
@@ -90,16 +90,25 @@ type EmoteResponse struct {
 	URLs             [][]string    `json:"urls"`
 }
 
-func CreateUserResponse(user *datastructure.User) *UserResponse {
+func CreateUserResponse(user *datastructure.User, opt ...UserResponseOptions) *UserResponse {
+	var options UserResponseOptions
+	if len(opt) > 0 {
+		options = opt[0]
+	}
+
 	response := UserResponse{
 		ID:           user.ID.Hex(),
 		Login:        user.Login,
 		DisplayName:  user.DisplayName,
 		Role:         datastructure.GetRole(user.RoleID),
-		EmoteAliases: user.EmoteAlias,
+		EmoteAliases: utils.Ternary(options.IncludeAliases, user.EmoteAlias, map[string]string{}).(map[string]string),
 	}
 
 	return &response
+}
+
+type UserResponseOptions struct {
+	IncludeAliases bool
 }
 
 type UserResponse struct {
@@ -108,7 +117,7 @@ type UserResponse struct {
 	Login        string             `json:"login"`
 	DisplayName  string             `json:"display_name"`
 	Role         datastructure.Role `json:"role"`
-	EmoteAliases map[string]string  `json:"emote_aliases"`
+	EmoteAliases map[string]string  `json:"emote_aliases,omitempty"`
 }
 
 func CreateBadgeResponse(badge *datastructure.Badge, users []*datastructure.User, idType string) *BadgeResponse {
