@@ -33,3 +33,11 @@ type EntitlementBuilder struct {
 }
 
 var Entitlements = entitlements{}
+
+type users struct{}
+
+type UserBuilder struct {
+	User datastructure.User
+}
+
+var Users users = users{}

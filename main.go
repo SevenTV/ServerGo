@@ -101,7 +101,7 @@ func Cleanup() {
 // Get all roles available and cache into the mongo context
 func GetAllRoles(ctx context.Context) ([]datastructure.Role, error) {
 	roles := []datastructure.Role{}
-	cur, err := mongo.Database.Collection("roles").Find(ctx, bson.M{})
+	cur, err := mongo.Collection(mongo.CollectionNameRoles).Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
