@@ -308,6 +308,7 @@ type Badge struct {
 	Tooltip string               `json:"tooltip"`
 	Name    string               `json:"name"`
 	Users   []primitive.ObjectID `json:"users"`
+	Misc    bool                 `json:"misc,omitempty"`
 }
 
 type Meta struct {

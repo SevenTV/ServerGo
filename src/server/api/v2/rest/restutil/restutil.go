@@ -150,6 +150,7 @@ func CreateBadgeResponse(badge *datastructure.Badge, users []*datastructure.User
 		Tooltip: badge.Tooltip,
 		Users:   userIDs,
 		URLs:    urls,
+		Misc:    badge.Misc,
 	}
 
 	return response
@@ -161,4 +162,5 @@ type BadgeResponse struct {
 	Tooltip string     `json:"tooltip"`
 	URLs    [][]string `json:"urls"`
 	Users   []string   `json:"users"`
+	Misc    bool       `json:"misc,omitempty"`
 }
