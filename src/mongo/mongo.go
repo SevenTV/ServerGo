@@ -122,6 +122,11 @@ func init() {
 		log.WithError(err).Fatal("mongo")
 	}
 
+	_, err = Collection(CollectionNameEntitlements).Indexes().CreateMany(ctx, []mongo.IndexModel{
+		{Keys: bson.M{"user_id": 1}},
+		{Keys: bson.M{"data.ref": 1}},
+	})
+
 	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
 
 	for _, v := range []string{"users", "emotes", "bans", "reports", "audit"} {
