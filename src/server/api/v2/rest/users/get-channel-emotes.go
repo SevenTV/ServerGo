@@ -82,6 +82,7 @@ func GetChannelEmotesRoute(router fiber.Router) {
 				return restutil.ErrInternalServer().Send(c, err.Error())
 			}
 
+			c.Set("Cache-Control", "max-age=30")
 			return c.Send(j)
 		})
 }
