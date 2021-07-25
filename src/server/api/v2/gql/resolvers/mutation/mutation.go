@@ -7,6 +7,7 @@ type MutationResolver struct{}
 type response struct {
 	OK      bool   `json:"ok"`
 	Message string `json:"message"`
+	Status  int32  `json:"status"`
 }
 
 type emoteInput struct {

@@ -41,6 +41,8 @@ type Mutation {
 }
 
 type Response {
+  # Deprecated: use ok to check success
+  status: Int!
   # Whether or not the request succeeded
   ok: Boolean!
   # Message in response
