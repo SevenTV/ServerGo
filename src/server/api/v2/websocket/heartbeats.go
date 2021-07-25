@@ -17,7 +17,6 @@ func awaitHeartbeat(ctx context.Context, c *Conn, duration time.Duration) func()
 			return
 		}
 		c.SendOpHeartbeatAck()
-		c.Refresh(ctx) // Refresh the connection's key expire in redis
 		lastTrigger = time.Now()
 	}
 

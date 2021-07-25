@@ -1,0 +1,77 @@
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: seventv
+  namespace: mongodb
+spec:
+  members: 3
+  type: ReplicaSet
+  version: "4.4"
+  persistent: true
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers: # Define resource limits
+            - name: "mongodb-agent"
+              resources:
+                requests:
+                  memory: "175Mi"
+                  cpu: "120m"
+                limits:
+                  cpu: "2"
+                  memory: "3Gi"
+            - name: "mongod"
+              resources:
+                requests:
+                  cpu: "200m"
+                  memory: "300Mi"
+                limits:
+                  cpu: "2"
+                  memory: "3Gi"
+
+  # User Definitions
+  users:
+    - name: root # The root user. 
+      db: admin
+      passwordSecretRef:
+        name: mongodb-password-rootuser
+      roles:
+        - name: root
+          db: admin
+      scramCredentialsSecretName: mongodb-scram-rootuser
+
+    - name: app # The app user.
+      db: 7tv
+      passwordSecretRef:
+        name: mongodb-password-appuser
+      roles: # Give Read/Write access to 7TV
+        - name: readWrite
+          db: 7tv
+        - name: readWrite
+          db: 7tv_stage
+      scramCredentialsSecretName: mongodb-scram-appuser
+
+
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: mongodb-password-rootuser
+# type: Opaque
+# stringData:
+#   password: <RootUserPassword>
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: mongodb-password-appuser
+# type: Opaque
+# stringData:
+#   password: <AppUserPassword>

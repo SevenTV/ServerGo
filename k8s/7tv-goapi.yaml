@@ -30,6 +30,9 @@ spec:
               httpHeaders:
                 - name: User-Agent
                   value: InternalLivenessProbe
+            failureThreshold: 2
+            initialDelaySeconds: 4
+            periodSeconds: 3
 
           env:
             - name: POD_NAME

@@ -12,6 +12,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: loki-grafana
+                name: grafana
                 port:
                   number: 80

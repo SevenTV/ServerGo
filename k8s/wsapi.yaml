@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: 7tv-wsapi
+  namespace: 7tv
+  labels:
+    app: 7tv-wsapi
+spec:
+  serviceName: seventv-wsapi-svc
+  selector:
+    matchLabels:
+      app: 7tv-wsapi
+  template:
+    metadata:
+      labels:
+        app: 7tv-wsapi
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: 7tv-wsapi
+          image: "nginx:alpine"
+          imagePullPolicy: IfNotPresent
+
+          volumeMounts:
+            - mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              name: config
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "600m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+          ports:
+            - containerPort: 3000
+      volumes:
+        - name: config
+          configMap:
+            name: wsapi-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seventv-wsapi-svc
+spec:
+  selector:
+    app: 7tv-wsapi
+  ports:
+    - port: 80
+      name: http
+      targetPort: 3000
+    - port: 443
+      name: https
+      targetPort: 3000

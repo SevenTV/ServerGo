@@ -1,4 +1,4 @@
-name: 7TV Go API Deploy
+name: Build & Deploy (Production)
 
 on:
   push:
@@ -12,6 +12,7 @@ env:
 
 jobs:
   build:
+    name: Build (Production)
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +32,7 @@ jobs:
           outputs: type=docker,dest=/tmp/image.tar
 
   deploy:
+    name: Deploy (Production)
     runs-on: ubuntu-latest
     needs: # Run this after build
       - build

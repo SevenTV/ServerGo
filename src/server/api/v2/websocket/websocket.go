@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -86,7 +85,6 @@ func WebSocket(app fiber.Router) {
 		log.Infof("<WS> Connect: %v", c.RemoteAddr().String())
 		ctx, cancel := context.WithCancel(context.WithValue(context.Background(), WebSocketConnKey, c))
 		c.cancel = cancel
-		c.Register(ctx)
 		mtx.Lock()
 		connections[c.Stat.UUID] = c
 		mtx.Unlock()
@@ -107,7 +105,6 @@ func WebSocket(app fiber.Router) {
 			log.Infof("<WS> Disconnect: %v", c.RemoteAddr().String())
 
 			// Handle connection removal
-			c.Unregister(ctx)
 			c.Stat.Closed = true // Set closed stat to true
 			mtx.Lock()
 			delete(connections, c.Stat.UUID) // Remove from connections map
@@ -152,8 +149,6 @@ func WebSocket(app fiber.Router) {
 					c.decodeMessageData(ctx, msg, &data) // Decode message data
 
 					subscription := data.Type // The subscription that the client wants to create
-
-					c.Register(ctx)
 
 					switch subscription {
 					case WebSocketSubscriptionChannelEmotes: // Subscribe: CHANNEL EMOTES
@@ -247,33 +242,6 @@ func (c *Conn) SendClosure(code int, message string) {
 	}
 	c.Close()
 	c.Stat.Lock.Unlock()
-}
-
-// Register the connection in the global redis store
-func (c *Conn) Register(ctx context.Context) {
-	data := make([]string, 8)
-	data = append(data, "id", c.Stat.UUID.String())
-	data = append(data, "ip", c.Stat.IP)
-	data = append(data, "seq", strconv.Itoa(int(c.Stat.Sequence)))
-	data = append(data, "age", c.Stat.CreatedAt.String())
-	if j, err := json.Marshal(c.Stat.Subscriptions); err == nil {
-		data = append(data, "subs", string(j))
-	}
-
-	if err := redis.Client.HSet(ctx, c.Stat.RedisKey, data).Err(); err != nil {
-		log.WithError(err).Error("websocket could not register socket")
-	}
-	redis.Client.Expire(ctx, c.Stat.RedisKey, time.Second*90)
-}
-
-// Bump the EXPIRE for this connection in the global redis store
-func (c *Conn) Refresh(ctx context.Context) {
-	redis.Client.Expire(ctx, c.Stat.RedisKey, time.Second*time.Duration(heartbeatInterval)+time.Second*60)
-}
-
-// Unregister the connection in the global redis store
-func (c *Conn) Unregister(ctx context.Context) {
-	redis.Client.Del(ctx, c.Stat.RedisKey) // Remove key
 }
 
 func (c *Conn) sendMessage(message *WebSocketMessageOutbound) {
