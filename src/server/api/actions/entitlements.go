@@ -86,6 +86,7 @@ func (b EntitlementBuilder) marshalData(data interface{}) EntitlementBuilder {
 	d, err := bson.Marshal(data)
 	if err != nil {
 		log.WithError(err).Error("bson")
+		return b
 	}
 
 	b.Entitlement.Data = d
@@ -97,6 +98,7 @@ func (b EntitlementBuilder) ReadSubscriptionData() datastructure.EntitledSubscri
 	var e datastructure.EntitledSubscription
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
 		log.WithError(err).Error("bson")
+		return e
 	}
 	return e
 }
@@ -106,6 +108,7 @@ func (b EntitlementBuilder) ReadBadgeData() datastructure.EntitledBadge {
 	var e datastructure.EntitledBadge
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
 		log.WithError(err).Error("bson")
+		return e
 	}
 	return e
 }
@@ -115,6 +118,7 @@ func (b EntitlementBuilder) ReadRoleData() datastructure.EntitledRole {
 	var e datastructure.EntitledRole
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
 		log.WithError(err).Error("bson")
+		return e
 	}
 	return e
 }
@@ -124,6 +128,7 @@ func (b EntitlementBuilder) ReadEmoteSetData() datastructure.EntitledEmoteSet {
 	var e datastructure.EntitledEmoteSet
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
 		log.WithError(err).Error("bson")
+		return e
 	}
 	return e
 }
