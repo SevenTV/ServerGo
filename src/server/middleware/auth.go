@@ -8,7 +8,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/redis"
-	"github.com/SevenTV/ServerGo/src/utils"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -144,12 +144,16 @@ func UserAuthMiddleware(required bool) func(c *fiber.Ctx) error {
 		}
 
 		// Assign role to user
-		if user.RoleID != nil {
-			role := datastructure.GetRole(user.RoleID)                                                          // Try to get the cached role
-			user.Role = utils.Ternary(role.ID.IsZero(), datastructure.DefaultRole, &role).(*datastructure.Role) // Assign cached role if available, otherwise set default role
-		} else {
-			user.Role = datastructure.DefaultRole // If no role assign default role
+		ub, err := actions.Users.With(c.Context(), user)
+		if err != nil {
+			return c.Status(500).JSON(&fiber.Map{
+				"status": 500,
+				"error":  "Internal Server Error",
+			})
 		}
+
+		role := ub.GetRole()
+		user.Role = &role
 
 		c.Locals("user", user)
 

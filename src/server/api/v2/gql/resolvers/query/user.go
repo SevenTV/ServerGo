@@ -346,10 +346,13 @@ func (r *UserResolver) Description() string {
 }
 
 func (r *UserResolver) Role() (*RoleResolver, error) {
-	roleID := r.v.RoleID
-	role := datastructure.GetRole(roleID)
+	ub, err := actions.Users.With(r.ctx, r.v)
+	if err != nil {
+		return nil, err
+	}
 
-	res, err := GenerateRoleResolver(r.ctx, &role, roleID, nil)
+	role := ub.GetRole()
+	res, err := GenerateRoleResolver(r.ctx, &role, &role.ID, nil)
 	if err != nil {
 		log.WithError(err).Error("generation")
 		return nil, resolvers.ErrInternalServer

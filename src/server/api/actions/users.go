@@ -8,6 +8,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/utils"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -93,12 +94,14 @@ func (b UserBuilder) FetchEntitlements(kind *datastructure.EntitlementKind) ([]E
 	// Make a request to get the user's entitlements
 	var entitlements []*datastructure.Entitlement
 	cur, err := mongo.Collection(mongo.CollectionNameEntitlements).Find(b.ctx, bson.M{
-		"user_id": b.User.ID,
-		"kind":    kind,
+		"user_id":  b.User.ID,
+		"kind":     kind,
+		"disabled": bson.M{"$not": bson.M{"$eq": true}},
 	})
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	} else if err != nil {
+		log.WithError(err).Error("actions, UserBuilder, FetchEntitlements")
 		return nil, err
 	}
 

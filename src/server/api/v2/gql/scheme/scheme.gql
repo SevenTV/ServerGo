@@ -144,7 +144,6 @@ input EntitledBadge {
 # Role entitlement data
 input EntitledRole {
   id: String!
-  override: Boolean!
 }
 
 # Emote Set entitlement data
