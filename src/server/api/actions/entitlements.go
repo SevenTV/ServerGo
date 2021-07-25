@@ -33,26 +33,19 @@ func (b EntitlementBuilder) Write() error {
 }
 
 // GetUser: Fetch the user data from the user ID assigned to the entitlement
-func (b EntitlementBuilder) GetUser() (*datastructure.User, error) {
+func (b EntitlementBuilder) GetUser() (*UserBuilder, error) {
 	if b.Entitlement.UserID.IsZero() {
 		return nil, fmt.Errorf("Entitlement does not have a user assigned")
 	}
 
-	// Get user from DB
-	res := mongo.Collection(mongo.CollectionNameUsers).FindOne(b.ctx, bson.M{"_id": b.Entitlement.UserID})
-	if err := res.Err(); err != nil {
+	ub, err := Users.GetByID(b.ctx, b.Entitlement.UserID)
+	if err != nil {
 		return nil, err
 	}
 
-	var user datastructure.User
-	if err := res.Decode(&user); err != nil {
-		return nil, err
-	}
-
-	role := datastructure.GetRole(user.RoleID)
-	user.Role = &role
-	b.User = &user
-	return &user, nil
+	role := datastructure.GetRole(ub.User.RoleID)
+	ub.User.Role = &role
+	return ub, nil
 }
 
 // SetKind: Change the entitlement's kind
@@ -182,30 +175,6 @@ func (b EntitlementBuilder) syncBadge() error {
 	return nil
 }
 func (b EntitlementBuilder) syncRole() error {
-	e := b.ReadRoleData()
-	role := datastructure.GetRole(&e.ObjectReference)
-	u, err := b.GetUser()
-	if err != nil {
-		return err
-	}
-
-	// If Entitled Role overrides; ignore user's current role and set new role immediately
-	canSetRole := e.Override
-	if !canSetRole && u.Role.Position < role.Position { // else check user's current role is of lower position than new role
-		canSetRole = true
-	}
-
-	if canSetRole { // Update in DB
-		_, err = mongo.Collection(mongo.CollectionNameUsers).UpdateByID(b.ctx, u.ID, bson.M{
-			"$set": bson.M{
-				"role": role.ID,
-			},
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 func (b EntitlementBuilder) syncEmoteSet() error {

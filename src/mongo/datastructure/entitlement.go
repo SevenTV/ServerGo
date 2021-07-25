@@ -48,9 +48,6 @@ type EntitledBadge struct {
 type EntitledRole struct {
 	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
-	// Whether or not the entitlemet will cause the user's role to be overriden,
-	// even if their current role has a higher position
-	Override bool `json:"override" bson:"override"`
 }
 
 // (Data) Emote Set binding in an Entitlement

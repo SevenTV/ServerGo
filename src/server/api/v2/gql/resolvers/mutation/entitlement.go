@@ -81,7 +81,6 @@ func (*MutationResolver) CreateEntitlement(ctx context.Context, args struct {
 		// Set Role Data to builder
 		builder = builder.SetRoleData(datastructure.EntitledRole{
 			ObjectReference: itemID,
-			Override:        args.Data.Role.Override,
 		})
 	}
 

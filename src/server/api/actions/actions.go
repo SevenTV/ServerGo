@@ -38,6 +38,9 @@ type users struct{}
 
 type UserBuilder struct {
 	User datastructure.User
+	ctx  context.Context
+
+	Entitlements []EntitlementBuilder
 }
 
 var Users users = users{}
