@@ -187,9 +187,17 @@ func (b EntitlementBuilder) syncEmoteSet() error {
 }
 
 func (b EntitlementBuilder) Log(str string) {
-	log.Infof("<EntitlementBuilder:%v> [Kind: %v] [User: %v] %v", b.Entitlement.ID, b.Entitlement.Kind, b.Entitlement.UserID, str)
+	log.WithFields(log.Fields{
+		"id":      b.Entitlement.ID,
+		"kind":    b.Entitlement.Kind,
+		"user_id": b.Entitlement.UserID,
+	}).Infof(str)
 }
 
 func (b EntitlementBuilder) LogError(str string) {
-	log.Errorf("<EntitlementBuilder:%v> [Kind: %v] [User: %v] %v", b.Entitlement.ID, b.Entitlement.Kind, b.Entitlement.UserID, str)
+	log.WithFields(log.Fields{
+		"id":      b.Entitlement.ID,
+		"kind":    b.Entitlement.Kind,
+		"user_id": b.Entitlement.UserID,
+	}).Errorf(str)
 }
