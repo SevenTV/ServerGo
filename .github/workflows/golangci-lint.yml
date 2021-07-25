@@ -20,5 +20,7 @@ jobs:
         with:
           path: cache
           key: ${{ runner.os }}-linting
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install libsnmp-dev
       - name: Linting
         run: export GOLANGCI_LINT_CACHE=$GITHUB_WORKSPACE/cache && export GOPATH=$GITHUB_WORKSPACE/cache && wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.41.1 && $GITHUB_WORKSPACE/bin/golangci-lint run --print-resources-usage --timeout 5m0s
