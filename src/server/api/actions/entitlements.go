@@ -152,7 +152,7 @@ func (b EntitlementBuilder) Log(str string) {
 		"id":      b.Entitlement.ID,
 		"kind":    b.Entitlement.Kind,
 		"user_id": b.Entitlement.UserID,
-	}).Infof(str)
+	}).Info(str)
 }
 
 func (b EntitlementBuilder) LogError(str string) {
@@ -160,5 +160,5 @@ func (b EntitlementBuilder) LogError(str string) {
 		"id":      b.Entitlement.ID,
 		"kind":    b.Entitlement.Kind,
 		"user_id": b.Entitlement.UserID,
-	}).Errorf(str)
+	}).Error(str)
 }
