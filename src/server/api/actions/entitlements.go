@@ -147,45 +147,6 @@ func (entitlements) With(ctx context.Context, e datastructure.Entitlement) Entit
 	}
 }
 
-// --- Syncing Methods ---
-
-// Sync: Apply the Entitlement
-// For example, grant the role to the user for a Role entitlement
-func (b EntitlementBuilder) Sync() error {
-	x := map[datastructure.EntitlementKind]func() error{
-		datastructure.EntitlementKindSubscription: b.syncSubscription,
-		datastructure.EntitlementKindBadge:        b.syncBadge,
-		datastructure.EntitlementKindRole:         b.syncRole,
-		datastructure.EntitlementKindEmoteSet:     b.syncEmoteSet,
-	}
-
-	f, ok := x[b.Entitlement.Kind]
-	if !ok {
-		return fmt.Errorf("Cannot sync with kind %v", b.Entitlement.Kind)
-	}
-
-	if err := f(); err != nil {
-		return err
-	} else {
-		b.Log(fmt.Sprintf("Synced successfully"))
-	}
-
-	return nil
-}
-
-func (b EntitlementBuilder) syncSubscription() error {
-	return nil
-}
-func (b EntitlementBuilder) syncBadge() error {
-	return nil
-}
-func (b EntitlementBuilder) syncRole() error {
-	return nil
-}
-func (b EntitlementBuilder) syncEmoteSet() error {
-	return nil
-}
-
 func (b EntitlementBuilder) Log(str string) {
 	log.WithFields(log.Fields{
 		"id":      b.Entitlement.ID,

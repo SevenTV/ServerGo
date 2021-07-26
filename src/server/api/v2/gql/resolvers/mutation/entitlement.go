@@ -139,11 +139,6 @@ func (*MutationResolver) CreateEntitlement(ctx context.Context, args struct {
 		return nil, resolvers.ErrInternalServer
 	}
 
-	// Sync the entitlement
-	if err := builder.Sync(); err != nil {
-		builder.LogError(fmt.Sprintf("Couldn't sync entitlement: %v", err.Error()))
-	}
-
 	// Add the X-Created-ID header specifying the ID of the entitlement created
 	f, ok := ctx.Value(utils.RequestCtxKey).(*fiber.Ctx) // Fiber context
 	if ok {
