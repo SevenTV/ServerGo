@@ -55,7 +55,7 @@ func GQL(app fiber.Router) fiber.Router {
 			"*",
 			fmt.Sprintf("%v,%v,%v,%v", configure.Config.GetString("website_url"), strings.Join(origins, ","), "chrome-extension://*", "moz-extension://*"),
 		).(string),
-		ExposeHeaders: "X-Collection-Size",
+		ExposeHeaders: "X-Collection-Size,X-Created-ID",
 		AllowMethods:  "GET,POST,PUT,PATCH,DELETE",
 	}))
 	gql.Use(middleware.RateLimitMiddleware("gql", int32(rl[0]), time.Millisecond*time.Duration(rl[1])))

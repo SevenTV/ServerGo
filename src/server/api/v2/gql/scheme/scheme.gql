@@ -38,6 +38,8 @@ type Mutation {
   editApp(properties: MetaInput!): Response
   # Create a new Entitlement
   createEntitlement(kind: EntitlementKind!, data: EntitlementCreateInput!, user_id: String!): Response
+  # Delete an Entitlement
+  deleteEntitlement(id: String!): Response
 }
 
 type Response {

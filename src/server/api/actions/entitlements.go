@@ -14,7 +14,7 @@ import (
 )
 
 // Write: Save this Entitlement to persistence
-func (b EntitlementBuilder) Write() error {
+func (b EntitlementBuilder) Write() (EntitlementBuilder, error) {
 	// Create new Object ID if this is a new entitlement
 	if b.Entitlement.ID.IsZero() {
 		b.Entitlement.ID = primitive.NewObjectID()
@@ -26,10 +26,10 @@ func (b EntitlementBuilder) Write() error {
 		Upsert: utils.BoolPointer(true),
 	}); err != nil {
 		log.WithError(err).Error("mongo")
-		return err
+		return b, err
 	}
 
-	return nil
+	return b, nil
 }
 
 // GetUser: Fetch the user data from the user ID assigned to the entitlement
