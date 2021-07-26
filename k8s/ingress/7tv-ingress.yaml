@@ -85,14 +85,28 @@ spec:
                 name: seventv-stageapi-svc
                 port:
                   number: 80
-          - path: /egvault
+
+    - host: egvault-stage.7tv.app
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: seventv-egvault-stage-svc
                 port:
                   number: 80
-
+              
+    - host: egvault.7tv.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: seventv-egvault-svc
+                port:
+                  number: 80
 
   tls:
     - hosts:
