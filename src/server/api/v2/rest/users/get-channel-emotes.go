@@ -15,7 +15,7 @@ import (
 )
 
 func GetChannelEmotesRoute(router fiber.Router) {
-	router.Get("/:user/emotes", middleware.RateLimitMiddleware("get-user-emotes", 24, 9*time.Second),
+	router.Get("/:user/emotes", middleware.RateLimitMiddleware("get-user-emotes", 100, 9*time.Second),
 		func(c *fiber.Ctx) error {
 			channelIdentifier := c.Params("user")
 
