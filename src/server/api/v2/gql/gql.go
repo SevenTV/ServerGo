@@ -35,9 +35,9 @@ type RootResolver struct {
 func GQL(app fiber.Router) fiber.Router {
 	gql := app.Group("/gql", middleware.UserAuthMiddleware(false))
 
-	box := packr.New("gql", "./scheme")
+	box := packr.New("gql", "./schema")
 
-	s, err := box.FindString("scheme.gql")
+	s, err := box.FindString("schema.gql")
 
 	if err != nil {
 		log.WithError(err).Fatal("gql failed")
