@@ -99,7 +99,7 @@ func Find(ctx context.Context, collection, commonIndex string, q interface{}, ou
 			return err
 		}
 
-		return cur.All(ctx, &output)
+		return cur.All(ctx, output)
 	}
 
 	sha1, err := genSha("find", collection, q, opts)
@@ -197,7 +197,7 @@ func FindOne(ctx context.Context, collection, commonIndex string, q interface{},
 			return err
 		}
 
-		return res.Decode(&output)
+		return res.Decode(output)
 	}
 
 	sha1, err := genSha("find-one", collection, q, opts)
