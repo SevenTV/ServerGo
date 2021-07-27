@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"time"
+
 	"github.com/SevenTV/ServerGo/src/utils"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -8,6 +10,7 @@ import (
 
 func Logger() func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+		start := time.Now()
 		var (
 			err interface{}
 		)
@@ -21,8 +24,9 @@ func Logger() func(c *fiber.Ctx) error {
 			_ = c.SendStatus(500)
 		}
 		l := log.WithFields(log.Fields{
-			"status": c.Response().StatusCode(),
-			"path":   utils.B2S(c.Request().RequestURI()),
+			"status":   c.Response().StatusCode(),
+			"path":     utils.B2S(c.Request().RequestURI()),
+			"duration": time.Since(start) / time.Millisecond,
 		})
 		if err != nil {
 			l = l.WithField("error", err)

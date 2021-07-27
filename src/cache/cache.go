@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/ServerGo/src/cache/decoder"
+	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/redis"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -90,6 +91,15 @@ func query(ctx context.Context, collection, sha1 string, output interface{}) ([]
 func Find(ctx context.Context, collection, commonIndex string, q interface{}, output interface{}, opts ...*options.FindOptions) error {
 	if !utils.IsSliceArrayPointer(output) {
 		return fmt.Errorf("the output must be a pointer to some array")
+	}
+
+	if configure.Config.GetBool("disable_redis_cache") {
+		cur, err := mongo.Database.Collection(collection).Find(ctx, q, opts...)
+		if err != nil {
+			return err
+		}
+
+		return cur.All(ctx, output)
 	}
 
 	sha1, err := genSha("find", collection, q, opts)
@@ -179,6 +189,15 @@ func Find(ctx context.Context, collection, commonIndex string, q interface{}, ou
 func FindOne(ctx context.Context, collection, commonIndex string, q interface{}, output interface{}, opts ...*options.FindOneOptions) error {
 	if !utils.IsPointer(output) {
 		return fmt.Errorf("the output must be a pointer")
+	}
+
+	if configure.Config.GetBool("disable_redis_cache") {
+		res := mongo.Database.Collection(collection).FindOne(ctx, q, opts...)
+		if err := res.Err(); err != nil {
+			return err
+		}
+
+		return res.Decode(output)
 	}
 
 	sha1, err := genSha("find-one", collection, q, opts)
