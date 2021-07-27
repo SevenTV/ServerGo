@@ -31,6 +31,7 @@ func (*MutationResolver) EditApp(ctx context.Context, args struct {
 
 	return &response{
 		OK:      true,
+		Status:  200,
 		Message: "OK",
 	}, nil
 }

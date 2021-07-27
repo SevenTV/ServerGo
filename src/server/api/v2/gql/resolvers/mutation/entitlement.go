@@ -45,6 +45,7 @@ func (*MutationResolver) DeleteEntitlement(ctx context.Context, args struct {
 
 	return &response{
 		OK:      true,
+		Status:  200,
 		Message: "Entitlement Deleted",
 	}, nil
 }
@@ -156,6 +157,7 @@ func (*MutationResolver) CreateEntitlement(ctx context.Context, args struct {
 
 	return &response{
 		OK:      true,
+		Status:  200,
 		Message: "Entitlement Created",
 	}, nil
 }
