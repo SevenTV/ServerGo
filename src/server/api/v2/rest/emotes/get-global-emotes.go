@@ -13,7 +13,7 @@ import (
 )
 
 func GetGlobalEmotes(router fiber.Router) {
-	router.Get("/global", middleware.RateLimitMiddleware("get-global-emotes", 3, 28*time.Second),
+	router.Get("/global", middleware.RateLimitMiddleware("get-global-emotes", 25, 16*time.Second),
 		func(c *fiber.Ctx) error {
 			var emotes []*datastructure.Emote
 			if err := cache.Find(c.Context(), "emotes", "", bson.M{

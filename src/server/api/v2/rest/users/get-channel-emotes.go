@@ -15,7 +15,7 @@ import (
 )
 
 func GetChannelEmotesRoute(router fiber.Router) {
-	router.Get("/:user/emotes", middleware.RateLimitMiddleware("get-user-emotes", 24, 9*time.Second),
+	router.Get("/:user/emotes", middleware.RateLimitMiddleware("get-user-emotes", 100, 9*time.Second),
 		func(c *fiber.Ctx) error {
 			channelIdentifier := c.Params("user")
 
@@ -82,6 +82,7 @@ func GetChannelEmotesRoute(router fiber.Router) {
 				return restutil.ErrInternalServer().Send(c, err.Error())
 			}
 
+			c.Set("Cache-Control", "max-age=30")
 			return c.Send(j)
 		})
 }
