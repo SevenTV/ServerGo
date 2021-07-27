@@ -56,7 +56,7 @@ func init() {
 
 	_, err = Collection(CollectionNameEmotes).Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.M{"name": 1}},
-		{Keys: bson.M{"owner_id": 1}},
+		{Keys: bson.M{"owner": 1}},
 		{Keys: bson.M{"tags": 1}},
 		{Keys: bson.M{"status": 1}},
 		{Keys: bson.M{"last_modified_date": 1}, Options: options.Index().SetExpireAfterSeconds(int32(time.Hour * 24 * 21 / time.Second)).SetPartialFilterExpression(bson.M{
