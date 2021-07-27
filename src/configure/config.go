@@ -45,6 +45,8 @@ type ServerCfg struct {
 
 	NodeID string `mapstructure:"node_id" json:"node_id"`
 
+	DisableRedisCache bool `mapstructure:"disable_redis_cache" json:"disable_redis_cache"`
+
 	ExitCode int `mapstructure:"exit_code" json:"exit_code"`
 }
 
@@ -111,6 +113,8 @@ func init() {
 	pflag.String("aws_region", "", "AWS region")
 
 	pflag.String("node_id", "", "Used in the response header of a requset X-Node-ID")
+
+	pflag.Bool("disable_redis_cache", false, "Disable the redis cache for mongodb")
 
 	pflag.String("version", "1.0", "Version of the system.")
 	pflag.Int("exit_code", 0, "Status code for successful and graceful shutdown, [0-125].")
