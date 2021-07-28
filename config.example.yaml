@@ -50,6 +50,9 @@ discord:
   webhooks:
     activity: [<webhook_id>, <webhook_token>] 
     alerts: [<webhook_id>, <webhook_token>] 
+
+    devops_role_id: 000000000000000000
+
 chatterino:
   version: 7.3.3
   stable:
