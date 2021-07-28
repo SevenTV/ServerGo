@@ -13,7 +13,7 @@ env:
 jobs:
   build:
     name: Build (Production)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       # Checkout repository
@@ -33,7 +33,7 @@ jobs:
 
   deploy:
     name: Deploy (Production)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: # Run this after build
       - build
 
