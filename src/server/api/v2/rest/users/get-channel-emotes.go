@@ -37,10 +37,10 @@ func GetChannelEmotesRoute(router fiber.Router) {
 					"$in": channel.EmoteIDs,
 				},
 			}
-			if !channel.HasPermission(datastructure.RolePermissionUseZerowidthEmote) {
+			if !channel.HasPermission(datastructure.RolePermissionUseZeroWidthEmote) {
 				// Omit zerowidth emote if the user lacks permission to use those
 				emoteFilter["visibility"] = bson.M{
-					"$bitsAllClear": datastructure.EmoteVisibilityZerowidth,
+					"$bitsAllClear": datastructure.EmoteVisibilityZeroWidth,
 				}
 			}
 

@@ -436,9 +436,9 @@ func (r *UserResolver) Emotes() ([]*EmoteResolver, error) {
 	emotes := datastructure.UserUtil.GetAliasedEmotes(r.v)
 	result := []*EmoteResolver{}
 
-	zeroWidthOK := r.v.HasPermission(datastructure.RolePermissionUseZerowidthEmote)
+	zeroWidthOK := r.v.HasPermission(datastructure.RolePermissionUseZeroWidthEmote)
 	for _, e := range emotes {
-		if !zeroWidthOK && utils.BitField.HasBits(int64(e.Visibility), int64(datastructure.EmoteVisibilityZerowidth)) {
+		if !zeroWidthOK && utils.BitField.HasBits(int64(e.Visibility), int64(datastructure.EmoteVisibilityZeroWidth)) {
 			continue // Skip if the emote is zero-width and user lacks permission
 		}
 
