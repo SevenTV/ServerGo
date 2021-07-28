@@ -1,16 +1,13 @@
 package server
 
 import (
-	"context"
 	"net"
 	"strings"
 	"time"
 
-	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/jwt"
-	"github.com/SevenTV/ServerGo/src/mongo"
-	"github.com/SevenTV/ServerGo/src/redis"
 	apiv2 "github.com/SevenTV/ServerGo/src/server/api/v2"
+	"github.com/SevenTV/ServerGo/src/server/health"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	log "github.com/sirupsen/logrus"
 
@@ -40,72 +37,6 @@ func New() *Server {
 	}
 
 	server.app.Use(middleware.Logger())
-
-	downedServices := map[string]bool{
-		"redis": false,
-		"mongo": false,
-	}
-	server.app.Get("/health", func(c *fiber.Ctx) error {
-		ctx := context.Background()
-		// CHECK REDIS
-		if ping := redis.Client.Ping(ctx).Val(); ping == "" {
-			log.Errorf("health, REDIS IS DOWN")
-
-			if down := downedServices["redis"]; !down {
-				go discord.SendServiceDown("redis")
-			}
-			downedServices["redis"] = true
-			return c.SendStatus(503)
-		} else {
-			if down := downedServices["redis"]; down {
-				go discord.SendServiceRestored("redis")
-			}
-			downedServices["redis"] = false
-		}
-
-		// CHECK MONGO
-		ctx, cancel := context.WithCancel(ctx)
-		pong := false
-		go func() { // Initiate a ping to mongo
-			err := mongo.Database.Client().Ping(ctx, nil)
-			if err == nil { // No error: OK, service is healthy
-				pong = true
-			}
-			cancel() // Cancel the context
-		}()
-
-		// Create a timeout
-		// If mongo fails to respond with a pong in time, we must end the rquest with 503 Service Unavailable
-		timer := time.NewTimer(3 * time.Second)
-		for {
-			select {
-			case <-ctx.Done():
-				break
-			case <-timer.C:
-				cancel()
-				break
-			}
-			break
-		}
-		timer.Stop()
-		if !pong {
-			log.Errorf("health, MONGO IS DOWN")
-
-			if down := downedServices["mongo"]; !down {
-				go discord.SendServiceDown("mongo")
-			}
-			downedServices["mongo"] = true
-			return c.SendStatus(503)
-		} else {
-			if down := downedServices["mongo"]; down {
-				go discord.SendServiceRestored("mongo")
-			}
-			downedServices["mongo"] = false
-		}
-
-		<-ctx.Done()
-		return c.Status(200).SendString("OK")
-	})
 
 	server.app.Use(func(c *fiber.Ctx) error {
 		c.Set("X-Node-Name", configure.NodeName)
@@ -146,6 +77,7 @@ func New() *Server {
 		return c.Next()
 	})
 
+	health.Health(server.app)
 	apiv2.API(server.app)
 
 	server.app.Use(func(c *fiber.Ctx) error {
