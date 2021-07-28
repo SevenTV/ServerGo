@@ -20,10 +20,12 @@ require (
 	github.com/graph-gophers/graphql-go v0.0.0-20210319060855-d2656e8bde15
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/json-iterator/go v1.1.11
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/klauspost/compress v1.13.0 // indirect
 	github.com/kr/pretty v0.2.1
 	github.com/kr/text v0.2.0 // indirect
+	github.com/mitchellh/panicwrap v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
@@ -39,3 +41,5 @@ require (
 )
 
 replace github.com/graph-gophers/graphql-go => github.com/troydota/graphql-go v0.0.0-20210702180404-92fc941a47cf
+
+replace github.com/mitchellh/panicwrap => github.com/bugsnag/panicwrap v1.3.3

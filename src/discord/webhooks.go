@@ -3,22 +3,21 @@ package discord
 import (
 	"context"
 	"fmt"
+	"math"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/SevenTV/ServerGo/src/cache"
+	"github.com/SevenTV/ServerGo/src/configure"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	"github.com/SevenTV/ServerGo/src/utils"
 	dgo "github.com/bwmarrin/discordgo"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func SendEmoteCreate(emote datastructure.Emote, actor datastructure.User) {
-	if webhookID == nil || webhookToken == nil {
-		return
-	}
-
-	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: fmt.Sprintf("**[activity]** 🆕 emote [%s](%v) created by %s", emote.Name, utils.GetEmotePageURL(emote.ID.Hex()), actor.DisplayName),
 		Embeds: []*dgo.MessageEmbed{
 			{
@@ -35,17 +34,9 @@ func SendEmoteCreate(emote datastructure.Emote, actor datastructure.User) {
 			},
 		},
 	})
-	if err != nil {
-		log.WithError(err).Error("discord SendEmoteCreate")
-		return
-	}
 }
 
 func SendEmoteEdit(emote datastructure.Emote, actor datastructure.User, logs []*datastructure.AuditLogChange, reason *string) {
-	if webhookID == nil || webhookToken == nil {
-		return
-	}
-
 	fields := make([]*dgo.MessageEmbedField, len(logs))
 	for i, ch := range logs {
 		fields[i] = &dgo.MessageEmbedField{
@@ -69,7 +60,7 @@ func SendEmoteEdit(emote datastructure.Emote, actor datastructure.User, logs []*
 	if emote.Owner != nil {
 		ownerName = emote.Owner.DisplayName
 	}
-	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: fmt.Sprintf("**[activity]** ✏️ emote [%s](%v) edited by [%s](%v)", emote.Name, utils.GetEmotePageURL(emote.ID.Hex()), actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex())),
 		Embeds: []*dgo.MessageEmbed{
 			{
@@ -88,18 +79,10 @@ func SendEmoteEdit(emote datastructure.Emote, actor datastructure.User, logs []*
 			},
 		},
 	})
-	if err != nil {
-		log.WithError(err).Error("discord SendEmoteEdit")
-		return
-	}
 }
 
 func SendEmoteDelete(emote datastructure.Emote, actor datastructure.User, reason string) {
-	if webhookID == nil || webhookToken == nil {
-		return
-	}
-
-	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: fmt.Sprintf("**[activity]** ❌ emote [%s](%v) deleted by [%s](%v)", emote.Name, utils.GetEmotePageURL(emote.ID.Hex()), actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex())),
 		Embeds: []*dgo.MessageEmbed{
 			{
@@ -112,18 +95,10 @@ func SendEmoteDelete(emote datastructure.Emote, actor datastructure.User, reason
 			},
 		},
 	})
-	if err != nil {
-		log.WithError(err).Error("discord SendEmoteDelete")
-		return
-	}
 }
 
 func SendEmoteMerge(emote1 datastructure.Emote, emote2 datastructure.Emote, actor datastructure.User, channels int32, reason string) {
-	if webhookID == nil || webhookToken == nil {
-		return
-	}
-
-	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: fmt.Sprintf(
 			"**[activity]** 🔀 [%v](%v) merged the emote [%v](%v) into [%v](%v)",
 			actor.DisplayName, utils.GetUserPageURL(actor.ID.Hex()),
@@ -148,26 +123,67 @@ func SendEmoteMerge(emote1 datastructure.Emote, emote2 datastructure.Emote, acto
 			},
 		},
 	})
-	if err != nil {
-		log.WithError(err).Error("discord SendEmoteMerge")
-		return
-	}
 }
 
 func SendPopularityCheckUpdateNotice(wg *sync.WaitGroup) {
-	_, err := d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: "**[routine]** ⚙️ updating emote popularities...",
 	})
-	if err != nil {
-		log.WithError(err).Error("task failed")
-	}
 
 	wg.Wait()
 
-	_, err = d.WebhookExecute(*webhookID, *webhookToken, true, &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: "**[routine]** ⚙️ successfully updated emote popularities!",
 	})
-	if err != nil {
-		log.WithError(err).Error("task failed")
-	}
+}
+
+func SendPanic(output string) {
+	_ = SendWebhook("alerts", &dgo.WebhookParams{
+		Content: fmt.Sprintf("**[PANIC]** NODE: **%v** | POD: **%v** | TIME: **%v**", configure.NodeName, configure.PodName, time.Now().UTC().Format("Monday, January 2 15:04:05 -0700 MST 2006")),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Color:       16728642,
+				Description: output[:int(math.Min(2000, float64(len(output))))],
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
+			},
+		},
+	})
+}
+
+func SendServiceDown(serviceName string) {
+	pingRole := configure.Config.GetString("discord.webhooks.sysadmin_role")
+
+	_ = SendWebhook("alerts", &dgo.WebhookParams{
+		Content: fmt.Sprintf("🟥 **[HEALTH CHECK FAILURE]** **%v DOWN!** <a:FEELSWAYTOODANKMAN:774004379878424607>🤜🏼🔔<@&%v>", strings.ToUpper(serviceName), configure.Config.GetString("discord.webhooks.sysadmin_role")),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Color: 16728642,
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
+			},
+		},
+		AllowedMentions: &dgo.MessageAllowedMentions{
+			Roles: utils.Ternary(pingRole != "", []string{pingRole}, []string{}).([]string),
+		},
+	})
+}
+
+func SendServiceRestored(serviceName string) {
+	_ = SendWebhook("alerts", &dgo.WebhookParams{
+		Content: fmt.Sprintf("✅ **[SERVICE RESTORED]** %v OK <a:FeelsDankCube:854955723221762058>", strings.ToUpper(serviceName)),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Color: 3319890,
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
+			},
+		},
+	})
 }

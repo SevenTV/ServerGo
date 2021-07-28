@@ -7,6 +7,7 @@ import (
 
 	"github.com/SevenTV/ServerGo/src/jwt"
 	apiv2 "github.com/SevenTV/ServerGo/src/server/api/v2"
+	"github.com/SevenTV/ServerGo/src/server/health"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	log "github.com/sirupsen/logrus"
 
@@ -76,16 +77,13 @@ func New() *Server {
 		return c.Next()
 	})
 
+	health.Health(server.app)
 	apiv2.API(server.app)
-
-	server.app.Get("/health", func(c *fiber.Ctx) error {
-		return c.Status(200).SendString("OK")
-	})
 
 	server.app.Use(func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(&fiber.Map{
 			"status":  404,
-			"message": "We don't know what you're looking for.",
+			"message": "Not Found",
 		})
 	})
 
