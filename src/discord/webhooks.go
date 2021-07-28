@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -143,6 +144,45 @@ func SendPanic(output string) {
 			{
 				Color:       16728642,
 				Description: output[:int(math.Min(2000, float64(len(output))))],
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
+			},
+		},
+	})
+}
+
+func SendServiceDown(serviceName string) {
+	pingRole := configure.Config.GetString("discord.webhooks.sysadmin_role")
+
+	_ = SendWebhook("alerts", &dgo.WebhookParams{
+		Content: fmt.Sprintf("🟥 **[HEALTH CHECK FAILURE]** **%v DOWN!** <a:FEELSWAYTOODANKMAN:774004379878424607>🤜🏼🔔<@&%v>", strings.ToUpper(serviceName), configure.Config.GetString("discord.webhooks.sysadmin_role")),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Color: 16728642,
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
+			},
+		},
+		AllowedMentions: &dgo.MessageAllowedMentions{
+			Roles: utils.Ternary(pingRole != "", []string{pingRole}, []string{}).([]string),
+		},
+	})
+}
+
+func SendServiceRestored(serviceName string) {
+	_ = SendWebhook("alerts", &dgo.WebhookParams{
+		Content: fmt.Sprintf("✅ **[SERVICE RESTORED]** %v OK <a:FeelsDankCube:854955723221762058>", strings.ToUpper(serviceName)),
+		Embeds: []*dgo.MessageEmbed{
+			{
+				Color: 3319890,
+				Fields: []*dgo.MessageEmbedField{
+					{Name: "Node", Value: configure.NodeName, Inline: true},
+					{Name: "Pod", Value: configure.PodName, Inline: true},
+				},
 			},
 		},
 	})
