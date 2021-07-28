@@ -6,7 +6,6 @@ require (
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/aws/aws-sdk-go v1.40.7
 	github.com/bsm/redislock v0.7.1
-	github.com/bugsnag/panicwrap v1.3.3 // indirect
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -26,6 +25,7 @@ require (
 	github.com/klauspost/compress v1.13.0 // indirect
 	github.com/kr/pretty v0.2.1
 	github.com/kr/text v0.2.0 // indirect
+	github.com/mitchellh/panicwrap v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
