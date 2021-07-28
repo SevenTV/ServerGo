@@ -14,27 +14,32 @@ import (
 )
 
 func Health(app fiber.Router) {
-	downedServices := sync.Map{}
-	downedServices.Store("redis", false)
-	downedServices.Store("mongo", false)
+	downedServices := map[string]bool{
+		"redis": false,
+		"mongo": false,
+	}
 
+	mtx := sync.Mutex{}
 	app.Get("/health", func(c *fiber.Ctx) error {
-		down := false
+		mtx.Lock()
+		defer mtx.Unlock()
+
+		isDown := false
 
 		redisCtx, cancel := context.WithTimeout(c.Context(), time.Second*10)
 		defer cancel()
 		// CHECK REDIS
 		if ping := redis.Client.Ping(redisCtx).Val(); ping == "" {
 			log.Error("health, REDIS IS DOWN")
-			down = true
-			if down, _ := downedServices.Load("redis"); !down.(bool) {
+			isDown = true
+			if down := downedServices["redis"]; !down {
 				go discord.SendServiceDown("redis")
-				downedServices.Store("redis", true)
+				downedServices["redis"] = true
 			}
 		} else {
-			if down, _ := downedServices.Load("redis"); down.(bool) {
+			if down := downedServices["redis"]; down {
 				go discord.SendServiceRestored("redis")
-				downedServices.Store("redis", false)
+				downedServices["redis"] = false
 			}
 		}
 
@@ -43,19 +48,19 @@ func Health(app fiber.Router) {
 		defer cancel()
 		if err := mongo.Database.Client().Ping(mongoCtx, nil); err != nil {
 			log.Error("health, MONGO IS DOWN")
-			down = true
-			if down, _ := downedServices.Load("mongo"); !down.(bool) {
+			isDown = true
+			if down := downedServices["mongo"]; !down {
 				go discord.SendServiceDown("mongo")
-				downedServices.Store("mongo", true)
+				downedServices["mongo"] = true
 			}
 		} else {
-			if down, _ := downedServices.Load("redis"); down.(bool) {
+			if down := downedServices["redis"]; down {
 				go discord.SendServiceRestored("mongo")
-				downedServices.Store("mongo", false)
+				downedServices["mongo"] = false
 			}
 		}
 
-		if down {
+		if isDown {
 			return c.SendStatus(503)
 		}
 
