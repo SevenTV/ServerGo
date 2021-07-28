@@ -30,9 +30,7 @@ type UserResolver struct {
 
 func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID *primitive.ObjectID, fields map[string]*SelectedField) (*UserResolver, error) {
 	if user == nil || user.Login == "" {
-		user = &datastructure.User{
-			Role: datastructure.DefaultRole,
-		}
+		user = &datastructure.User{}
 		if err := cache.FindOne(ctx, "users", "", bson.M{
 			"_id": userID,
 		}, user); err != nil {
@@ -44,9 +42,9 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		}
 	}
 
-	if user == nil {
-		return nil, nil
-	}
+	// i guess we need to know the user role now UHM
+	role := datastructure.GetRole(user.RoleID)
+	user.Role = &role
 
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
 	actorCanEdit := false

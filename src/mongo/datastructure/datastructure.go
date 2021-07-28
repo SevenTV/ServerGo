@@ -144,6 +144,11 @@ func (u *User) GetEmoteSlots() int32 {
 
 // Test whether a User has a permission flag
 func (u *User) HasPermission(flag int64) bool {
+	// This function requires the users role to be queried. if it is not it will panic so we must ensure that the role is present.
+	if u.Role == nil {
+		role := GetRole(u.RoleID)
+		u.Role = &role
+	}
 	var allowed int64 = 0
 	var denied int64 = 0
 	if u != nil {
