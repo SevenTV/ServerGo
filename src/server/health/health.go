@@ -54,7 +54,7 @@ func Health(app fiber.Router) {
 				downedServices["mongo"] = true
 			}
 		} else {
-			if down := downedServices["redis"]; down {
+			if down := downedServices["mongo"]; down {
 				go discord.SendServiceRestored("mongo")
 				downedServices["mongo"] = false
 			}
