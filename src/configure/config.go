@@ -76,6 +76,13 @@ func checkErr(err error) {
 }
 
 func init() {
+	if NodeName == "" {
+		NodeName = "STANDALONE"
+	}
+	if PodName == "" {
+		PodName = "STANDALONE"
+	}
+
 	log.SetFormatter(&log.JSONFormatter{})
 	// Default config
 	b, _ := json.Marshal(defaultConf)

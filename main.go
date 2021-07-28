@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/mitchellh/panicwrap"
 
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,6 +32,16 @@ func init() {
 }
 
 func main() {
+	// Catch panics - send alert to discord channel optionally
+	exitStatus, err := panicwrap.BasicWrap(panicHandler)
+	if err != nil {
+		// PANIC-CEPTION. BRRRRRRRRRRRRRRRRRRRRRRRR
+		panic(err)
+	}
+	if exitStatus >= 0 {
+		os.Exit(exitStatus)
+	}
+
 	configCode := configure.Config.GetInt("exit_code")
 	if configCode > 125 || configCode < 0 {
 		log.WithField("requested_exit_code", configCode).Warn("invalid exit code specified in config using 0 as new exit code")
@@ -84,6 +97,9 @@ func main() {
 
 	go tasks.Start()
 
+	if true {
+		panic("xd")
+	}
 	select {}
 }
 
@@ -118,4 +134,12 @@ func GetAllRoles(ctx context.Context) ([]datastructure.Role, error) {
 	// Set "AllRoles" value to mongo context
 	cache.CachedRoles = roles
 	return roles, nil
+}
+
+func panicHandler(output string) {
+	fmt.Printf("PANIC OCCURED:\n\n%s\n", output)
+	// Try to send a message to discord
+	discord.SendPanic(output)
+
+	os.Exit(1)
 }

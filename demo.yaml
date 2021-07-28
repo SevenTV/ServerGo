@@ -45,10 +45,11 @@ aws_cdn_bucket:
 featured_broadcast: 
 # Discord Credentials
 discord:
-  # Webhook, for logging activity to a discord channel
-  # 0: webhook id
-  # 1: webhook token
-  webhook: [<webhook_id>, <webhook_token>] 
+  # Webhooks, for logging activity to a discord channel
+  # Maps to webhooks.<webhook__name>, with slice value containing ID at index 0 and token at index 1
+  webhooks:
+    activity: [<webhook_id>, <webhook_token>] 
+    alerts: [<webhook_id>, <webhook_token>] 
 chatterino:
   version: 7.3.3
   stable:
