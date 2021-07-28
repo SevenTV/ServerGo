@@ -17,7 +17,7 @@ import (
 )
 
 func SendEmoteCreate(emote datastructure.Emote, actor datastructure.User) {
-	_ = SendWebhook("alerts", &dgo.WebhookParams{
+	_ = SendWebhook("activity", &dgo.WebhookParams{
 		Content: fmt.Sprintf("**[activity]** 🆕 emote [%s](%v) created by %s", emote.Name, utils.GetEmotePageURL(emote.ID.Hex()), actor.DisplayName),
 		Embeds: []*dgo.MessageEmbed{
 			{
