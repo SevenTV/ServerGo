@@ -120,10 +120,15 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		sharedWith = append(sharedWith, v.Hex())
 	}
 
+	// Emote is global: can only be added if is owner or shared
 	if utils.BitField.HasBits(int64(emote.Visibility), int64(datastructure.EmoteVisibilityPrivate)) {
 		if emote.OwnerID.Hex() != channelID.Hex() && !utils.Contains(sharedWith, emoteID.Hex()) {
 			return nil, resolvers.ErrUnknownEmote
 		}
+	}
+	// User tries to add a zero-width emote but lacks permission
+	if utils.BitField.HasBits(int64(emote.Visibility), int64(datastructure.EmoteVisibilityZerowidth)) && !usr.HasPermission(datastructure.RolePermissionUseZerowidthEmote) {
+		return nil, resolvers.ErrAccessDenied
 	}
 
 	emoteIDs := append(channel.EmoteIDs, emoteID)
@@ -284,7 +289,6 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 		update["$unset"] = unset
 	}
 
-	fmt.Println("alias:", update, args.Data.Alias)
 	after := options.After
 	doc := mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": channelID,
