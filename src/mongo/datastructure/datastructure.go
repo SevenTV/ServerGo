@@ -61,6 +61,7 @@ const (
 	EmoteVisibilityOverrideFFZ
 	EmoteVisibilityOverrideTwitchGlobal
 	EmoteVisibilityOverrideTwitchSubscriber
+	EmoteVisibilityZerowidth
 
 	EmoteVisibilityAll int32 = (1 << iota) - 1
 )
