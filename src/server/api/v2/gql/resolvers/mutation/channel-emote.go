@@ -127,7 +127,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		}
 	}
 	// User tries to add a zero-width emote but lacks permission
-	if utils.BitField.HasBits(int64(emote.Visibility), int64(datastructure.EmoteVisibilityZerowidth)) && !usr.HasPermission(datastructure.RolePermissionUseZeroWidthEmote) {
+	if utils.BitField.HasBits(int64(emote.Visibility), int64(datastructure.EmoteVisibilityZeroWidth)) && !usr.HasPermission(datastructure.RolePermissionUseZeroWidthEmote) {
 		return nil, resolvers.ErrAccessDenied
 	}
 
