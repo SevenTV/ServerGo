@@ -97,9 +97,6 @@ func main() {
 
 	go tasks.Start()
 
-	if true {
-		panic("xd")
-	}
 	select {}
 }
 
