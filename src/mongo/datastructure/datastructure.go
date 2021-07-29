@@ -177,23 +177,14 @@ func GetRole(id *primitive.ObjectID) Role {
 		return *DefaultRole
 	}
 
-	var found bool
-	var role Role
-
+	rid := *id
 	roles := cache.CachedRoles.([]Role)
 
 	for _, r := range roles {
-		if r.ID.Hex() != id.Hex() {
+		if r.ID != rid {
 			continue
 		}
-
-		role = r
-		found = true
-		break
-	}
-
-	if found {
-		return role
+		return r
 	}
 	return *DefaultRole
 }

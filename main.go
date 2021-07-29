@@ -121,10 +121,6 @@ func GetAllRoles(ctx context.Context) ([]datastructure.Role, error) {
 
 	roles = append(roles, *datastructure.DefaultRole) // Add default role
 	if err := cur.All(ctx, &roles); err != nil {      // Fetch roles
-		if err == mongo.ErrNoDocuments {
-			return roles, nil
-		}
-
 		return nil, err
 	}
 
