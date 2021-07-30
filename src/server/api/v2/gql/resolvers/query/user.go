@@ -47,8 +47,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 	if err != nil {
 		return nil, err
 	}
-	role := ub.GetRole()
-	user.Role = &role
+	user = &ub.User
 
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
 	actorCanEdit := false
@@ -348,13 +347,7 @@ func (r *UserResolver) Description() string {
 }
 
 func (r *UserResolver) Role() (*RoleResolver, error) {
-	ub, err := actions.Users.With(r.ctx, r.v)
-	if err != nil {
-		return nil, err
-	}
-
-	role := ub.GetRole()
-	res, err := GenerateRoleResolver(r.ctx, &role, &role.ID, nil)
+	res, err := GenerateRoleResolver(r.ctx, r.v.Role, r.v.RoleID, nil)
 	if err != nil {
 		log.WithError(err).Error("generation")
 		return nil, resolvers.ErrInternalServer
@@ -438,7 +431,6 @@ func (r *UserResolver) Emotes() ([]*EmoteResolver, error) {
 	emotes := datastructure.UserUtil.GetAliasedEmotes(r.v)
 	result := []*EmoteResolver{}
 
-	fmt.Println(r.v.Role)
 	zeroWidthOK := r.v.HasPermission(datastructure.RolePermissionUseZeroWidthEmote)
 	for _, e := range emotes {
 		if !zeroWidthOK && utils.BitField.HasBits(int64(e.Visibility), int64(datastructure.EmoteVisibilityZeroWidth)) {

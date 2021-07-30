@@ -7,6 +7,7 @@ import (
 
 	"github.com/SevenTV/ServerGo/src/cache"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/actions"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/rest/restutil"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	"github.com/gofiber/fiber/v2"
@@ -17,18 +18,21 @@ import (
 func GetChannelEmotesRoute(router fiber.Router) {
 	router.Get("/:user/emotes", middleware.RateLimitMiddleware("get-user-emotes", 100, 9*time.Second),
 		func(c *fiber.Ctx) error {
+			ctx := c.Context()
 			channelIdentifier := c.Params("user")
 
 			// Find channel user
 			var channel *datastructure.User
-			if err := cache.FindOne(c.Context(), "users", "", bson.M{
+			ub, err := actions.Users.Get(ctx, bson.M{
 				"$or": bson.A{
 					bson.M{"id": channelIdentifier},
 					bson.M{"login": strings.ToLower(channelIdentifier)},
 				},
-			}, &channel); err != nil {
+			})
+			if err != nil {
 				return restutil.ErrUnknownUser().Send(c, err.Error())
 			}
+			channel = &ub.User
 
 			// Find emotes
 			var emotes []*datastructure.Emote

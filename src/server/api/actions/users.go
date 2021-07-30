@@ -20,6 +20,10 @@ func (users) With(ctx context.Context, user *datastructure.User) (UserBuilder, e
 	}
 
 	builder.User = *user
+
+	role := builder.GetRole()
+	builder.User.Role = &role
+	builder.User.RoleID = user.RoleID
 	builder.ctx = ctx
 	return builder, nil
 }
@@ -48,13 +52,14 @@ func (users) Get(ctx context.Context, q bson.M) (*UserBuilder, error) {
 		return nil, err
 	}
 
-	role := datastructure.GetRole(user.RoleID)
-	user.Role = &role
 	builder := UserBuilder{
 		user,
 		ctx,
 		[]EntitlementBuilder{},
 	}
+	role := builder.GetRole()
+	builder.User.Role = &role
+	builder.User.RoleID = &role.ID
 
 	return &builder, nil
 }
