@@ -43,7 +43,11 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 	}
 
 	// i guess we need to know the user role now UHM
-	role := datastructure.GetRole(user.RoleID)
+	ub, err := actions.Users.With(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	role := ub.GetRole()
 	user.Role = &role
 
 	usr, usrValid := ctx.Value(utils.UserKey).(*datastructure.User)
@@ -434,6 +438,7 @@ func (r *UserResolver) Emotes() ([]*EmoteResolver, error) {
 	emotes := datastructure.UserUtil.GetAliasedEmotes(r.v)
 	result := []*EmoteResolver{}
 
+	fmt.Println(r.v.Role)
 	zeroWidthOK := r.v.HasPermission(datastructure.RolePermissionUseZeroWidthEmote)
 	for _, e := range emotes {
 		if !zeroWidthOK && utils.BitField.HasBits(int64(e.Visibility), int64(datastructure.EmoteVisibilityZeroWidth)) {
