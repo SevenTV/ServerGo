@@ -42,7 +42,7 @@ func GenerateUserResolver(ctx context.Context, user *datastructure.User, userID 
 		}
 	}
 
-	// i guess we need to know the user role now UHM
+	// Get the user's role
 	ub, err := actions.Users.With(ctx, user)
 	if err != nil {
 		return nil, err
