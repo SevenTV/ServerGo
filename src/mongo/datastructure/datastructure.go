@@ -74,6 +74,7 @@ var EmoteVisibilitySimpleMap = map[int32]string{
 	EmoteVisibilityOverrideBTTV:             "OVERRIDE_BTTV",
 	EmoteVisibilityOverrideTwitchSubscriber: "OVERRIDE_TWITCH_SUBSCRIBER",
 	EmoteVisibilityOverrideTwitchGlobal:     "OVERRIDE_TWITCH_GLOBAL",
+	EmoteVisibilityZeroWidth:                "ZERO_WIDTH",
 }
 
 func (e *Emote) GetSimpleVisibility() []string {
