@@ -23,8 +23,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/klauspost/compress v1.13.0 // indirect
-	github.com/kr/pretty v0.2.1
-	github.com/kr/text v0.2.0 // indirect
+	github.com/kr/pretty v0.3.0
 	github.com/mitchellh/panicwrap v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
