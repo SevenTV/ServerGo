@@ -513,7 +513,7 @@ func (*QueryResolver) ThirdPartyEmotes(ctx context.Context, args struct {
 		}
 	}
 	for _, e := range globalEmotes {
-		e.Visibility = datastructure.EmoteVisibilityGlobal
+		e.Visibility |= datastructure.EmoteVisibilityGlobal
 	}
 	emotes = append(emotes, globalEmotes...)
 

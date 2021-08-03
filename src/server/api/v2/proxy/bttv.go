@@ -34,6 +34,7 @@ func GetGlobalEmotesBTTV(ctx context.Context) ([]*datastructure.Emote, error) {
 	result := make([]*datastructure.Emote, len(emotes))
 	for i, e := range emotes {
 		emote, err := bttvTo7TV([]emoteBTTV{e})
+
 		if err != nil {
 			continue
 		}
@@ -104,6 +105,12 @@ func bttvTo7TV(emotes []emoteBTTV) ([]*datastructure.Emote, error) {
 		if emote.User == nil { // Add empty user if missing
 			emote.User = &userBTTV{}
 		}
+		visibility := int32(0)
+		// Set zero-width flag if emote is a hardcoded bttv zerowidth
+		if utils.Contains(zeroWidthBTTV, emote.Code) {
+			fmt.Println("yeahbut", emote.Code)
+			visibility |= datastructure.EmoteVisibilityZeroWidth
+		}
 
 		// Generate URLs list
 		urls := make([][]string, 3)
@@ -119,7 +126,7 @@ func bttvTo7TV(emotes []emoteBTTV) ([]*datastructure.Emote, error) {
 			Name:       emote.Code,
 			Width:      [4]int16{28, 0, 0, 0},
 			Height:     [4]int16{28, 0, 0, 0},
-			Visibility: 0,
+			Visibility: visibility,
 			Mime:       "image/" + emote.ImageType,
 			Status:     datastructure.EmoteStatusLive,
 			Owner: &datastructure.User{
@@ -160,4 +167,9 @@ type userResponseBTTV struct {
 	ID           string      `json:"id"`
 	Emotes       []emoteBTTV `json:"channelEmotes"`
 	SharedEmotes []emoteBTTV `json:"sharedEmotes"`
+}
+
+var zeroWidthBTTV = []string{
+	"SoSnowy", "IceCold", "SantaHat", "TopHat",
+	"ReinDeer", "CandyCane", "cvMask", "cvHazmat",
 }
