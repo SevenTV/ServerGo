@@ -108,7 +108,6 @@ func bttvTo7TV(emotes []emoteBTTV) ([]*datastructure.Emote, error) {
 		visibility := int32(0)
 		// Set zero-width flag if emote is a hardcoded bttv zerowidth
 		if utils.Contains(zeroWidthBTTV, emote.Code) {
-			fmt.Println("yeahbut", emote.Code)
 			visibility |= datastructure.EmoteVisibilityZeroWidth
 		}
 
