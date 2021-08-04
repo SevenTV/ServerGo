@@ -19,6 +19,7 @@ import (
 	"github.com/SevenTV/ServerGo/src/discord"
 	"github.com/SevenTV/ServerGo/src/mongo"
 	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
+	"github.com/SevenTV/ServerGo/src/server/api/v2/rest/emotes/encoding"
 	"github.com/SevenTV/ServerGo/src/server/api/v2/rest/restutil"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	"github.com/SevenTV/ServerGo/src/utils"
@@ -28,7 +29,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 const MAX_FRAME_COUNT = 4096
@@ -78,7 +78,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			ogFilePath := fmt.Sprintf("%v/og", fileDir) // The original file's path in temp
 
 			// Remove temp dir once this function completes
-			defer os.RemoveAll(fileDir)
+			// defer os.RemoveAll(fileDir)
 
 			// Get form data parts
 			channelID = &usr.ID // Default channel ID to the uploader
@@ -219,17 +219,6 @@ func CreateEmoteRoute(router fiber.Router) {
 				}
 
 				ogWidth, ogHeight = getGifDimensions(g)
-			case "webp":
-				wand := imagick.NewMagickWand()
-				if err := wand.ReadImageFile(ogFile); err == nil {
-					ogWidth = int(wand.GetImageWidth())
-					ogHeight = int(wand.GetImageHeight())
-				} else {
-					log.WithError(err).Error("could not decode webp")
-					return restutil.ErrBadRequest().Send(c, err.Error())
-				}
-
-				wand.Destroy()
 			default:
 				return restutil.ErrBadRequest().Send(c, "Unsupported File Format")
 			}
@@ -248,7 +237,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizes := strings.Split(file[2], "x")
 				maxWidth, _ := strconv.ParseFloat(sizes[0], 4)
 				maxHeight, _ := strconv.ParseFloat(sizes[1], 4)
-				quality := file[3]
+				quality, _ := strconv.ParseInt(file[3], 10, 2)
 				outFile := fmt.Sprintf("%v/%v.webp", fileDir, scope)
 
 				// Get calculed ratio for the size
@@ -259,61 +248,21 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizeX[i] = int16(width)
 				sizeY[i] = int16(height)
 
-				// Create new boundaries for frames
-				mw := imagick.NewMagickWand() // Get magick wand & read the original image
-				if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				if err := mw.ReadImage(ogFilePath); err != nil {
-					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Input File Not Readable: %s", err))
+				// Encode with selected encoder
+				err := encoding.FFmpeg.Encode(ogFilePath, outFile, width, height, quality)
+				if err != nil {
+					log.WithField("size", scope).WithError(err).Error("could not encode image")
+					return restutil.ErrBadRequest().Send(c, err.Error())
 				}
 
-				// Merge all frames with coalesce
-				aw := mw.CoalesceImages()
-				if err = aw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				mw.Destroy()
-				defer aw.Destroy()
-
-				// Set delays
-				mw = imagick.NewMagickWand()
-				if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				defer mw.Destroy()
-
-				// Add each frame to our animated image
-				mw.ResetIterator()
-				for ind := 0; ind < int(aw.GetNumberImages()); ind++ {
-					aw.SetIteratorIndex(ind)
-					img := aw.GetImage()
-
-					if err = img.ResizeImage(uint(width), uint(height), imagick.FILTER_LANCZOS); err != nil {
-						log.WithError(err).Errorf("ResizeImage i=%v", ind)
-						continue
-					}
-					if err = mw.AddImage(img); err != nil {
-						log.WithError(err).Errorf("AddImage i=%v", ind)
-					}
-					img.Destroy()
-				}
-
-				// Done - convert to WEBP
-				q, _ := strconv.Atoi(quality)
-				if err = mw.SetImageCompressionQuality(uint(q)); err != nil {
-					log.WithError(err).Error("SetImageCompressionQuality")
-				}
-				if err = mw.SetImageFormat("webp"); err != nil {
-					log.WithError(err).Error("SetImageFormat")
-				}
-
-				// Write to file
-				err = mw.WriteImages(outFile, true)
 				if err != nil {
 					log.WithError(err).Error("cmd")
 					return restutil.ErrInternalServer().Send(c)
 				}
+			}
+
+			if true {
+				return nil
 			}
 
 			wg := &sync.WaitGroup{}
