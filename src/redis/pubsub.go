@@ -65,3 +65,11 @@ type PubSubPayloadUserEmotes struct {
 	ID      string `json:"id"`
 	Actor   string `json:"actor"`
 }
+
+type EventApiV1ChannelEmotes struct {
+	Channel string `json:"removed"`
+	EmoteID string `json:"id"`
+	Name    string `json:"name"`
+	Action  string `json:"action"`
+	Author  string `json:"author"`
+}

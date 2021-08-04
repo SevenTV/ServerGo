@@ -165,18 +165,21 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 	}
 
 	// Push event to redis
-	{
-		ids := make([]string, len(channel.EmoteIDs))
-		for i, id := range channel.EmoteIDs {
-			ids[i] = id.Hex()
-		}
-
-		_ = redis.Publish(ctx, fmt.Sprintf("users:%v:emotes", channel.Login), redis.PubSubPayloadUserEmotes{
+	go func() {
+		_ = redis.Publish(context.Background(), fmt.Sprintf("users:%v:emotes", channel.Login), redis.PubSubPayloadUserEmotes{
 			Removed: false,
 			ID:      emoteID.Hex(),
 			Actor:   usr.DisplayName,
 		})
-	}
+
+		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
+			Channel: channel.Login,
+			EmoteID: emoteID.Hex(),
+			Name:    emote.Name,
+			Action:  "added",
+			Author:  usr.DisplayName,
+		})
+	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
 }
 
@@ -226,6 +229,23 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, resolvers.ErrUnknownChannel
+		}
+		log.WithError(err).Error("mongo")
+		return nil, resolvers.ErrInternalServer
+	}
+
+	res = mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
+		"_id": emoteID,
+	})
+	emote := &datastructure.Emote{}
+	err = res.Err()
+
+	if err == nil {
+		err = res.Decode(emote)
+	}
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, resolvers.ErrUnknownEmote
 		}
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
@@ -316,18 +336,26 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 	}
 
 	// Push event to redis
-	{
-		ids := make([]string, len(channel.EmoteIDs))
-		for i, id := range channel.EmoteIDs {
-			ids[i] = id.Hex()
-		}
-
-		_ = redis.Publish(ctx, fmt.Sprintf("users:%v:emotes", channel.Login), redis.PubSubPayloadUserEmotes{
+	go func() {
+		_ = redis.Publish(context.Background(), fmt.Sprintf("users:%v:emotes", channel.Login), redis.PubSubPayloadUserEmotes{
 			Removed: false,
 			ID:      emoteID.Hex(),
 			Actor:   usr.DisplayName,
 		})
-	}
+
+		newName := emote.Name
+		if args.Data.Alias != nil {
+			newName = *args.Data.Alias
+		}
+
+		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
+			Channel: channel.Login,
+			EmoteID: emoteID.Hex(),
+			Name:    newName,
+			Action:  "renamed",
+			Author:  usr.DisplayName,
+		})
+	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
 }
 
@@ -376,6 +404,23 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, resolvers.ErrUnknownChannel
+		}
+		log.WithError(err).Error("mongo")
+		return nil, resolvers.ErrInternalServer
+	}
+
+	res = mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
+		"_id": emoteID,
+	})
+	emote := &datastructure.Emote{}
+	err = res.Err()
+
+	if err == nil {
+		err = res.Decode(emote)
+	}
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, resolvers.ErrUnknownEmote
 		}
 		log.WithError(err).Error("mongo")
 		return nil, resolvers.ErrInternalServer
@@ -450,17 +495,25 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 	}
 
 	// Push event to redis
-	{
-		ids := make([]string, len(channel.EmoteIDs))
-		for i, id := range channel.EmoteIDs {
-			ids[i] = id.Hex()
-		}
-
+	go func() {
 		_ = redis.Publish(ctx, fmt.Sprintf("users:%v:emotes", channel.Login), redis.PubSubPayloadUserEmotes{
 			Removed: true,
 			ID:      emoteID.Hex(),
 			Actor:   usr.DisplayName,
 		})
-	}
+
+		oldName := emote.Name
+		if v, ok := channel.EmoteAlias[emoteID.Hex()]; ok {
+			oldName = v
+		}
+
+		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
+			Channel: channel.Login,
+			EmoteID: emoteID.Hex(),
+			Name:    oldName,
+			Action:  "removed",
+			Author:  usr.DisplayName,
+		})
+	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
 }
