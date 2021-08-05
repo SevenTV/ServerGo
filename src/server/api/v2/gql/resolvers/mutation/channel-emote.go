@@ -175,9 +175,10 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
+			Emote:   emote,
 			Name:    emote.Name,
-			Action:  "added",
-			Author:  usr.DisplayName,
+			Action:  "ADD",
+			Actor:   usr.DisplayName,
 		})
 	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
@@ -351,9 +352,10 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
+			Emote:   emote,
 			Name:    newName,
-			Action:  "renamed",
-			Author:  usr.DisplayName,
+			Action:  "RENAME",
+			Actor:   usr.DisplayName,
 		})
 	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
@@ -510,9 +512,10 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
+			Emote:   emote,
 			Name:    oldName,
-			Action:  "removed",
-			Author:  usr.DisplayName,
+			Action:  "REMOVE",
+			Actor:   usr.DisplayName,
 		})
 	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)

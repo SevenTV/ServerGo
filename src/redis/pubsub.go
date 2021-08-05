@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 
+	"github.com/SevenTV/ServerGo/src/mongo/datastructure"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
@@ -67,9 +68,10 @@ type PubSubPayloadUserEmotes struct {
 }
 
 type EventApiV1ChannelEmotes struct {
-	Channel string `json:"channel"`
-	EmoteID string `json:"id"`
-	Name    string `json:"name"`
-	Action  string `json:"action"`
-	Author  string `json:"author"`
+	Channel string               `json:"channel"`
+	EmoteID string               `json:"id"`
+	Emote   *datastructure.Emote `json:"emote"`
+	Name    string               `json:"name"`
+	Action  string               `json:"action"`
+	Actor   string               `json:"author"`
 }
