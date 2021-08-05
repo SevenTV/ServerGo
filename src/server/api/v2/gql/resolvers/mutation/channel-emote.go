@@ -177,6 +177,19 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 			name = v
 		}
 
+		ownerRes := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+			"_id": emote.OwnerID,
+		})
+
+		owner := datastructure.User{}
+		err = ownerRes.Err()
+		if err == nil {
+			err = ownerRes.Decode(&owner)
+		}
+		if err != nil {
+			log.WithError(err).Error("mongo")
+		}
+
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
@@ -193,9 +206,9 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 				Animated:   emote.Animated,
 				Owner: redis.EventApiV1ChannelEmotesEmoteOwner{
 					ID:          emote.OwnerID.Hex(),
-					TwitchID:    emote.Owner.TwitchID,
-					DisplayName: emote.Owner.DisplayName,
-					Login:       emote.Owner.Login,
+					TwitchID:    owner.TwitchID,
+					DisplayName: owner.DisplayName,
+					Login:       owner.Login,
 				},
 			},
 		})
@@ -368,6 +381,19 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 			newName = *args.Data.Alias
 		}
 
+		ownerRes := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+			"_id": emote.OwnerID,
+		})
+
+		owner := datastructure.User{}
+		err = ownerRes.Err()
+		if err == nil {
+			err = ownerRes.Decode(&owner)
+		}
+		if err != nil {
+			log.WithError(err).Error("mongo")
+		}
+
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
@@ -384,9 +410,9 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 				Animated:   emote.Animated,
 				Owner: redis.EventApiV1ChannelEmotesEmoteOwner{
 					ID:          emote.OwnerID.Hex(),
-					TwitchID:    emote.Owner.TwitchID,
-					DisplayName: emote.Owner.DisplayName,
-					Login:       emote.Owner.Login,
+					TwitchID:    owner.TwitchID,
+					DisplayName: owner.DisplayName,
+					Login:       owner.Login,
 				},
 			},
 		})
