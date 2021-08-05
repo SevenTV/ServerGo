@@ -69,9 +69,9 @@ type PubSubPayloadUserEmotes struct {
 
 type EventApiV1ChannelEmotes struct {
 	Channel string               `json:"channel"`
-	EmoteID string               `json:"id"`
+	EmoteID string               `json:"emote_id"`
 	Emote   *datastructure.Emote `json:"emote,omitempty"`
 	Name    string               `json:"name"`
 	Action  string               `json:"action"`
-	Actor   string               `json:"author"`
+	Actor   string               `json:"actor"`
 }
