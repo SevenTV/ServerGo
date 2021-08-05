@@ -512,7 +512,6 @@ func (*MutationResolver) RemoveChannelEmote(ctx context.Context, args struct {
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
-			Emote:   emote,
 			Name:    oldName,
 			Action:  "REMOVE",
 			Actor:   usr.DisplayName,
