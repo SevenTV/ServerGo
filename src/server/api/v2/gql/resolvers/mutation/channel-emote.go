@@ -172,6 +172,7 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 			Actor:   usr.DisplayName,
 		})
 
+		emote.URLs = datastructure.GetEmoteURLs(*emote)
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
@@ -349,6 +350,7 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 			newName = *args.Data.Alias
 		}
 
+		emote.URLs = datastructure.GetEmoteURLs(*emote)
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
