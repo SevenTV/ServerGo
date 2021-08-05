@@ -354,7 +354,7 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 			EmoteID: emoteID.Hex(),
 			Emote:   emote,
 			Name:    newName,
-			Action:  "RENAME",
+			Action:  "UPDATE",
 			Actor:   usr.DisplayName,
 		})
 	}()
