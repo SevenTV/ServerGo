@@ -172,14 +172,32 @@ func (*MutationResolver) AddChannelEmote(ctx context.Context, args struct {
 			Actor:   usr.DisplayName,
 		})
 
-		emote.URLs = datastructure.GetEmoteURLs(*emote)
+		name := emote.Name
+		if v, ok := channel.EmoteAlias[emoteID.Hex()]; ok {
+			name = v
+		}
+
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
-			Emote:   emote,
-			Name:    emote.Name,
+			Name:    name,
 			Action:  "ADD",
 			Actor:   usr.DisplayName,
+			Emote: &redis.EventApiV1ChannelEmotesEmote{
+				Name:       emote.Name,
+				Visibility: emote.Visibility,
+				MIME:       emote.Mime,
+				Tags:       emote.Tags,
+				Width:      emote.Width,
+				Height:     emote.Height,
+				Animated:   emote.Animated,
+				Owner: redis.EventApiV1ChannelEmotesEmoteOwner{
+					ID:          emote.OwnerID.Hex(),
+					TwitchID:    emote.Owner.TwitchID,
+					DisplayName: emote.Owner.DisplayName,
+					Login:       emote.Owner.Login,
+				},
+			},
 		})
 	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
@@ -346,18 +364,31 @@ func (*MutationResolver) EditChannelEmote(ctx context.Context, args struct {
 		})
 
 		newName := emote.Name
-		if args.Data.Alias != nil {
+		if args.Data.Alias != nil && *args.Data.Alias != "" {
 			newName = *args.Data.Alias
 		}
 
-		emote.URLs = datastructure.GetEmoteURLs(*emote)
 		_ = redis.Publish(context.Background(), fmt.Sprintf("events-v1:channel-emotes:%s", channel.Login), redis.EventApiV1ChannelEmotes{
 			Channel: channel.Login,
 			EmoteID: emoteID.Hex(),
-			Emote:   emote,
-			Name:    utils.Ternary(newName == "", emote.Name, newName).(string),
+			Name:    newName,
 			Action:  "UPDATE",
 			Actor:   usr.DisplayName,
+			Emote: &redis.EventApiV1ChannelEmotesEmote{
+				Name:       emote.Name,
+				Visibility: emote.Visibility,
+				MIME:       emote.Mime,
+				Tags:       emote.Tags,
+				Width:      emote.Width,
+				Height:     emote.Height,
+				Animated:   emote.Animated,
+				Owner: redis.EventApiV1ChannelEmotesEmoteOwner{
+					ID:          emote.OwnerID.Hex(),
+					TwitchID:    emote.Owner.TwitchID,
+					DisplayName: emote.Owner.DisplayName,
+					Login:       emote.Owner.Login,
+				},
+			},
 		})
 	}()
 	return query_resolvers.GenerateUserResolver(ctx, channel, &channelID, field.Children)
