@@ -12,9 +12,9 @@ func Chatterino(app fiber.Router) fiber.Router {
 	chatterino := app.Group("/chatterino")
 
 	chatterino.Get("/version/:platform/:branch", func(c *fiber.Ctx) error {
-		portableDownload := configure.Config.GetString(fmt.Sprintf("chatterino.portable_download.%v", c.Params("platform")))
-		download := configure.Config.GetString(fmt.Sprintf("chatterino.download.%v", c.Params("platform")))
-		update := configure.Config.GetString(fmt.Sprintf("chatterino.update.%v", c.Params("platform")))
+		portableDownload := configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.portable_download", c.Params("branch"), c.Params("platform")))
+		download := configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.download", c.Params("branch"), c.Params("platform")))
+		update := configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.update", c.Params("branch"), c.Params("platform")))
 		version := configure.Config.GetString("chatterino.version")
 
 		result := VersionResult{
@@ -38,7 +38,7 @@ func Chatterino(app fiber.Router) fiber.Router {
 
 type VersionResult struct {
 	Download         string `json:"download"`
-	PortableDownload string `json:"portable_download"`
-	UpdateEXE        string `json:"updateexe"`
+	PortableDownload string `json:"portable_download,omitempty"`
+	UpdateExe        string `json:"updateexe,omitempty"`
 	Version          string `json:"version"`
 }
