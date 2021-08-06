@@ -54,30 +54,30 @@ discord:
     devops_role_id: 000000000000000000
 
 chatterino:
-  version: 7.3.3
+  version: 7.3.4
   stable:
     win:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Installer.exe
-      portable_download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Portable.zip
-      updateexe: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Installer.exe
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Installer.exe
+      portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Portable.zip
+      updateexe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Installer.exe
     linux:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino-x86_64.AppImage
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino-x86_64.AppImage
       portable_download: 
       updateexe: 
     macos:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.dmg
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.dmg
       portable_download: 
-      updateexe: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.dmg
+      updateexe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.dmg
   beta:
     win:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Installer.exe
-      portable_download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Portable.zip
-      updateexe: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.Installer.exe
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Installer.exe
+      portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Portable.zip
+      updateexe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.Installer.exe
     linux:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino-x86_64.AppImage
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino-x86_64.AppImage
       portable_download: 
       updateexe: 
     macos:
-      download: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.dmg
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.dmg
       portable_download: 
-      updateexe: https://github.com/SevenTV/chatterino7/releases/download/7.3.3/Chatterino.dmg
+      updateexe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.4/Chatterino.dmg
