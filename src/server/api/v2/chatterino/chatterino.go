@@ -14,8 +14,8 @@ func Chatterino(app fiber.Router) fiber.Router {
 	chatterino.Get("/version/:platform/:branch", func(c *fiber.Ctx) error {
 
 		result := VersionResult{
-			Download:         configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.portable_download", c.Params("branch"), c.Params("platform"))),
-			PortableDownload: configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.download", c.Params("branch"), c.Params("platform"))),
+			Download:         configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.download", c.Params("branch"), c.Params("platform"))),
+			PortableDownload: configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.portable_download", c.Params("branch"), c.Params("platform"))),
 			UpdateExe:        configure.Config.GetString(fmt.Sprintf("chatterino.%s.%s.updateexe", c.Params("branch"), c.Params("platform"))),
 			Version:          configure.Config.GetString("chatterino.version"),
 		}
