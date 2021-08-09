@@ -11,7 +11,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fasthttp/websocket v1.4.3-beta.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/go-redis/redis/v8 v8.11.1
+	github.com/go-redis/redis/v8 v8.11.2
 	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/gofiber/fiber/v2 v2.16.0
 	github.com/gofiber/websocket/v2 v2.0.7
