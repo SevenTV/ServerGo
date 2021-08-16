@@ -25,7 +25,6 @@ import (
 	"github.com/SevenTV/ServerGo/src/server"
 
 	"github.com/SevenTV/ServerGo/src/server/api/tasks"
-	api_websocket "github.com/SevenTV/ServerGo/src/server/api/v2/websocket"
 )
 
 func init() {
@@ -110,9 +109,6 @@ func main() {
 }
 
 func Cleanup() {
-	// Remove websocket connections from Redis
-	api_websocket.Cleanup()
-
 	// Cleanup ongoing tasks
 	tasks.Cleanup()
 
