@@ -22,7 +22,7 @@ jobs:
       # Build image
       - name: Build Image
         id: build_step
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
