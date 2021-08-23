@@ -7,6 +7,7 @@ import (
 
 	"github.com/SevenTV/ServerGo/src/jwt"
 	apiv2 "github.com/SevenTV/ServerGo/src/server/api/v2"
+	apiv3 "github.com/SevenTV/ServerGo/src/server/api/v3"
 	"github.com/SevenTV/ServerGo/src/server/health"
 	"github.com/SevenTV/ServerGo/src/server/middleware"
 	log "github.com/sirupsen/logrus"
@@ -79,6 +80,7 @@ func New() *Server {
 
 	health.Health(server.app)
 	apiv2.API(server.app)
+	apiv3.API(server.app)
 
 	server.app.Use(func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(&fiber.Map{
