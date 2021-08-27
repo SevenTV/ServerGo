@@ -64,6 +64,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			mr := multipart.NewReader(file, utils.B2S(req.Header.MultipartFormBoundary()))
 			var emote *datastructure.Emote
 			var emoteName string              // The name of the emote
+			var emoteTags []string            // The emote's tags, if any
 			var channelID *primitive.ObjectID // The channel creating this emote
 			var contentType string
 			var ext string
@@ -99,6 +100,20 @@ func CreateEmoteRoute(router fiber.Router) {
 						return restutil.ErrBadRequest().Send(c, "Emote Name Not Readable")
 					}
 					emoteName = utils.B2S(buf[:n])
+				case "tags":
+					b, err := io.ReadAll(part)
+					if err != nil {
+						return restutil.ErrBadRequest().Send(c, "Couldn't parse tags")
+					}
+
+					emoteTags = strings.Split(utils.B2S(b), ",")
+					// Validate tags
+					if len(emoteTags) > 6 {
+						return restutil.ErrBadRequest().Send(c, "Too Many Tags (6)")
+					}
+					if ok, badTag := validation.ValidateEmoteTags(emoteTags); !ok {
+						return restutil.ErrBadRequest().Send(c, fmt.Sprintf("'%s' is not a valid tag", badTag))
+					}
 				case "channel":
 					buf := make([]byte, 64)
 					n, err := part.Read(buf)
@@ -317,7 +332,7 @@ func CreateEmoteRoute(router fiber.Router) {
 				Name:             emoteName,
 				Mime:             mime,
 				Status:           datastructure.EmoteStatusProcessing,
-				Tags:             []string{},
+				Tags:             utils.Ternary(emoteTags != nil, emoteTags, []string{}).([]string),
 				Visibility:       datastructure.EmoteVisibilityPrivate | datastructure.EmoteVisibilityUnlisted,
 				OwnerID:          *channelID,
 				LastModifiedDate: time.Now(),

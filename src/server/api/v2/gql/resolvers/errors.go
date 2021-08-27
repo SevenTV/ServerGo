@@ -8,7 +8,7 @@ var (
 	ErrInvalidName           = fmt.Errorf("Invalid Name")
 	ErrLoginRequired         = fmt.Errorf("Authentication Required")
 	ErrInvalidOwner          = fmt.Errorf("Invalid Owner ID")
-	ErrInvalidTags           = fmt.Errorf("Too Many Tags (10)")
+	ErrInvalidTags           = fmt.Errorf("Too Many Tags (6)")
 	ErrInvalidTag            = fmt.Errorf("Invalid Tags")
 	ErrInvalidUpdate         = fmt.Errorf("Invalid Update")
 	ErrUnknownEmote          = fmt.Errorf("Unknown Emote")

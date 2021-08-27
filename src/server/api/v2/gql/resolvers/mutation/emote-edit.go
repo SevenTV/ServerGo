@@ -49,13 +49,11 @@ func (*MutationResolver) EditEmote(ctx context.Context, args struct {
 	}
 	if req.Tags != nil {
 		tags := *req.Tags
-		if len(tags) > 10 {
+		if len(tags) > 6 {
 			return nil, resolvers.ErrInvalidTags
 		}
-		for _, t := range tags {
-			if !validation.ValidateEmoteTag(utils.S2B(t)) {
-				return nil, resolvers.ErrInvalidTag
-			}
+		if ok, _ := validation.ValidateEmoteTags(tags); !ok {
+			return nil, resolvers.ErrInvalidTag
 		}
 		update["tags"] = tags
 	}
