@@ -303,7 +303,6 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 		if args.Filter.Visibility != nil {
 			visibilityFilter["$bitsAllSet"] = *args.Filter.Visibility
 		}
-		fmt.Println(*args.Filter.VisibilityClear)
 		if args.Filter.VisibilityClear != nil {
 			visibilityFilter["$bitsAllClear"] = *args.Filter.VisibilityClear
 		}
