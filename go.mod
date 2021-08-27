@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/andybalholm/brotli v1.0.3 // indirect
-	github.com/aws/aws-sdk-go v1.40.22
+	github.com/aws/aws-sdk-go v1.40.27
 	github.com/bsm/redislock v0.7.1
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/davecgh/go-spew v1.1.1
