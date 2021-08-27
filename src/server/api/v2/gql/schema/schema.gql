@@ -86,6 +86,7 @@ type Query {
 input EmoteFilter {
   width_range: [Int!]
   visibility: Int
+  visibility_clear: Int
 }
 
 input EmoteInput {

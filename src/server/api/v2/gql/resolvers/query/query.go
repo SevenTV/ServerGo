@@ -299,8 +299,16 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 
 	if args.Filter != nil {
 		// Handle visibility filter
+		visibilityFilter := bson.M{}
 		if args.Filter.Visibility != nil {
-			match["visibility"] = bson.M{"$bitsAllSet": *args.Filter.Visibility}
+			visibilityFilter["$bitsAllSet"] = *args.Filter.Visibility
+		}
+		fmt.Println(*args.Filter.VisibilityClear)
+		if args.Filter.VisibilityClear != nil {
+			visibilityFilter["$bitsAllClear"] = *args.Filter.VisibilityClear
+		}
+		if len(visibilityFilter) > 0 {
+			match["visibility"] = visibilityFilter
 		}
 
 		// Handle width range filter
@@ -469,8 +477,9 @@ func (*QueryResolver) SearchEmotes(ctx context.Context, args struct {
 }
 
 type EmoteSearchFilter struct {
-	WidthRange *[]int32
-	Visibility *int32
+	WidthRange      *[]int32
+	Visibility      *int32
+	VisibilityClear *int32
 }
 
 func (*QueryResolver) ThirdPartyEmotes(ctx context.Context, args struct {
