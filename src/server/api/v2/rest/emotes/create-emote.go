@@ -82,24 +82,24 @@ func CreateEmoteRoute(router fiber.Router) {
 
 			// Get form data parts
 			channelID = &usr.ID // Default channel ID to the uploader
-			for i := 0; i < 3; i++ {
+			for {
 				part, err := mr.NextPart()
-				if err != nil {
-					continue
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					log.WithError(err).Error("multipart_reader")
+					break
 				}
 
-				if part.FormName() == "name" {
-					buf := make([]byte, 32)
+				switch part.FormName() {
+				case "name":
+					buf := make([]byte, 100)
 					n, err := part.Read(buf)
 					if err != nil && err != io.EOF {
 						return restutil.ErrBadRequest().Send(c, "Emote Name Not Readable")
 					}
-
-					if !validation.ValidateEmoteName(buf[:n]) {
-						return restutil.ErrBadRequest().Send(c, "Invalid Emote Name")
-					}
 					emoteName = utils.B2S(buf[:n])
-				} else if part.FormName() == "channel" {
+				case "channel":
 					buf := make([]byte, 64)
 					n, err := part.Read(buf)
 					if err != nil && err != io.EOF {
@@ -110,7 +110,7 @@ func CreateEmoteRoute(router fiber.Router) {
 						return restutil.ErrBadRequest().Send(c, "Invalid User ID")
 					}
 					channelID = &id
-				} else if part.FormName() == "emote" {
+				case "emote":
 					if emoteName == "" { // Infer emote name from file name if it wasn't specified
 						basename := part.FileName()
 						emoteName = strings.TrimSuffix(basename, filepath.Ext(basename))
@@ -164,6 +164,9 @@ func CreateEmoteRoute(router fiber.Router) {
 
 			if emoteName == "" || channelID == nil {
 				return restutil.ErrBadRequest().Send(c, "Uncomplete Form")
+			}
+			if !validation.ValidateEmoteName(utils.S2B(emoteName)) {
+				return restutil.ErrBadRequest().Send(c, "Invalid Emote Name")
 			}
 
 			if !usr.HasPermission(datastructure.RolePermissionManageUsers) {
@@ -220,16 +223,7 @@ func CreateEmoteRoute(router fiber.Router) {
 
 				ogWidth, ogHeight = getGifDimensions(g)
 			case "webp":
-				wand := imagick.NewMagickWand()
-				if err := wand.ReadImageFile(ogFile); err == nil {
-					ogWidth = int(wand.GetImageWidth())
-					ogHeight = int(wand.GetImageHeight())
-				} else {
-					log.WithError(err).Error("could not decode webp")
-					return restutil.ErrBadRequest().Send(c, err.Error())
-				}
-
-				wand.Destroy()
+				return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Sorry, direct support for WebP uploads is not available yet."))
 			default:
 				return restutil.ErrBadRequest().Send(c, "Unsupported File Format")
 			}
