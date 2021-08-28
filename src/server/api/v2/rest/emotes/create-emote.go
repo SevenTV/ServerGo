@@ -8,11 +8,14 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/image/webp"
 
 	"github.com/SevenTV/ServerGo/src/aws"
 	"github.com/SevenTV/ServerGo/src/configure"
@@ -79,7 +82,7 @@ func CreateEmoteRoute(router fiber.Router) {
 			ogFilePath := fmt.Sprintf("%v/og", fileDir) // The original file's path in temp
 
 			// Remove temp dir once this function completes
-			defer os.RemoveAll(fileDir)
+			// defer os.RemoveAll(fileDir)
 
 			// Get form data parts
 			channelID = &usr.ID // Default channel ID to the uploader
@@ -210,6 +213,9 @@ func CreateEmoteRoute(router fiber.Router) {
 			}
 			ogHeight := 0
 			ogWidth := 0
+			framesDir := fmt.Sprintf("%s/frames", fileDir)
+			frameCount := 1
+
 			switch ext {
 			case "jpg":
 				img, err := jpeg.Decode(ogFile)
@@ -235,13 +241,53 @@ func CreateEmoteRoute(router fiber.Router) {
 				}
 
 				// Set a cap on how many frames are allowed
-				if len(g.Image) > MAX_FRAME_COUNT {
+				frameCount = len(g.Image)
+				if frameCount > MAX_FRAME_COUNT {
 					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Maximum Frame Count Exceeded (%v)", MAX_FRAME_COUNT))
 				}
 
 				ogWidth, ogHeight = getGifDimensions(g)
 			case "webp":
-				return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Sorry, direct support for WebP uploads is not available yet."))
+				if err := os.MkdirAll(framesDir, 0777); err != nil {
+					log.WithError(err).Error("mkdir")
+					return restutil.ErrBadRequest().Send(c, err.Error())
+				}
+
+				// Decode all frames individually
+				// This uses the webpmux tool, stopping once the index finds a nonexistent frame and yields an error
+				i := 0
+				for {
+					i++
+					outFile := fmt.Sprintf("%s/%d", framesDir, i)
+					cmd := exec.CommandContext(fctx, "webpmux", []string{
+						"-get", "frame", strconv.Itoa(i),
+						ogFilePath,
+						"-o", outFile,
+					}...)
+					out, err := cmd.CombinedOutput()
+
+					// Error: stop iterating frames at this point
+					// Check the output, and return 500 if it's an error other than "could not get frame"
+					if err != nil {
+						if !strings.HasPrefix(string(out), "ERROR (WEBP_MUX_NOT_FOUND): Could not get frame") {
+							log.WithError(fmt.Errorf(err.Error() + " " + string(out))).Error("webpmux")
+							return restutil.ErrInternalServer().Send(c, fmt.Sprintf("WebP decode failure @ frame %d", i))
+						}
+						break
+					}
+
+					// Decode the frame to get width/height
+					frameFile, _ := os.Open(outFile)
+					icfg, err := webp.DecodeConfig(frameFile)
+					if err != nil {
+						log.WithError(err).Error("webp, DecodeConfig")
+						return restutil.ErrInternalServer().Send(c)
+					}
+					ogWidth = icfg.Width
+					ogHeight = icfg.Height
+
+					frameCount++
+				}
 			default:
 				return restutil.ErrBadRequest().Send(c, "Unsupported File Format")
 			}
@@ -271,60 +317,88 @@ func CreateEmoteRoute(router fiber.Router) {
 				sizeX[i] = int16(width)
 				sizeY[i] = int16(height)
 
-				// Create new boundaries for frames
-				mw := imagick.NewMagickWand() // Get magick wand & read the original image
-				if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				if err := mw.ReadImage(ogFilePath); err != nil {
-					return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Input File Not Readable: %s", err))
-				}
+				// When the input file is webp, use webpmux to encode
+				if ext == "webp" {
+					cmdArgs := []string{}
 
-				// Merge all frames with coalesce
-				aw := mw.CoalesceImages()
-				if err = aw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				mw.Destroy()
-				defer aw.Destroy()
+					for i := 1; i < frameCount; i++ {
+						sizedFrame := fmt.Sprintf("%s/%d_%s.webp", framesDir, i, scope)
+						cmd := exec.CommandContext(fctx, "cwebp", []string{
+							fmt.Sprintf("%s/%d", framesDir, i),
+							"-q", quality,
+							"-resize", strconv.Itoa(int(width)), strconv.Itoa(int(height)),
+							"-o", sizedFrame,
+						}...)
+						out, err := cmd.CombinedOutput()
+						if err != nil {
+							return restutil.ErrInternalServer().Send(c, fmt.Sprintf("failed to encode @ frame %d (cwebp): %s", i, string(out)))
+						}
 
-				// Set delays
-				mw = imagick.NewMagickWand()
-				if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
-					log.WithError(err).Error("SetResourceLimit")
-				}
-				defer mw.Destroy()
-
-				// Add each frame to our animated image
-				mw.ResetIterator()
-				for ind := 0; ind < int(aw.GetNumberImages()); ind++ {
-					aw.SetIteratorIndex(ind)
-					img := aw.GetImage()
-
-					if err = img.ResizeImage(uint(width), uint(height), imagick.FILTER_LANCZOS); err != nil {
-						log.WithError(err).Errorf("ResizeImage i=%v", ind)
-						continue
+						cmdArgs = append(cmdArgs, "-frame", sizedFrame, "+250+0+0+0-b")
 					}
-					if err = mw.AddImage(img); err != nil {
-						log.WithError(err).Errorf("AddImage i=%v", ind)
+					cmdArgs = append(cmdArgs, "-o", outFile)
+					cmd := exec.CommandContext(fctx, "webpmux", cmdArgs...)
+					out, err := cmd.CombinedOutput()
+					if err != nil {
+						log.WithError(fmt.Errorf(err.Error() + " " + string(out))).Error("webpmux")
+						return restutil.ErrInternalServer().Send(c, fmt.Sprintf("failed to re-encode webp (webpmux): %s", out))
 					}
-					img.Destroy()
-				}
+				} else { // for regular images use imagemagick
+					// Create new boundaries for frames
+					mw := imagick.NewMagickWand() // Get magick wand & read the original image
+					if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
+						log.WithError(err).Error("SetResourceLimit")
+					}
+					if err := mw.ReadImage(ogFilePath); err != nil {
+						return restutil.ErrBadRequest().Send(c, fmt.Sprintf("Input File Not Readable: %s", err))
+					}
 
-				// Done - convert to WEBP
-				q, _ := strconv.Atoi(quality)
-				if err = mw.SetImageCompressionQuality(uint(q)); err != nil {
-					log.WithError(err).Error("SetImageCompressionQuality")
-				}
-				if err = mw.SetImageFormat("webp"); err != nil {
-					log.WithError(err).Error("SetImageFormat")
-				}
+					// Merge all frames with coalesce
+					aw := mw.CoalesceImages()
+					if err = aw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
+						log.WithError(err).Error("SetResourceLimit")
+					}
+					mw.Destroy()
+					defer aw.Destroy()
 
-				// Write to file
-				err = mw.WriteImages(outFile, true)
-				if err != nil {
-					log.WithError(err).Error("cmd")
-					return restutil.ErrInternalServer().Send(c)
+					// Set delays
+					mw = imagick.NewMagickWand()
+					if err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 500); err != nil {
+						log.WithError(err).Error("SetResourceLimit")
+					}
+					defer mw.Destroy()
+
+					// Add each frame to our animated image
+					mw.ResetIterator()
+					for ind := 0; ind < int(aw.GetNumberImages()); ind++ {
+						aw.SetIteratorIndex(ind)
+						img := aw.GetImage()
+
+						if err = img.ResizeImage(uint(width), uint(height), imagick.FILTER_LANCZOS); err != nil {
+							log.WithError(err).Errorf("ResizeImage i=%v", ind)
+							continue
+						}
+						if err = mw.AddImage(img); err != nil {
+							log.WithError(err).Errorf("AddImage i=%v", ind)
+						}
+						img.Destroy()
+					}
+
+					// Done - convert to WEBP
+					q, _ := strconv.Atoi(quality)
+					if err = mw.SetImageCompressionQuality(uint(q)); err != nil {
+						log.WithError(err).Error("SetImageCompressionQuality")
+					}
+					if err = mw.SetImageFormat("webp"); err != nil {
+						log.WithError(err).Error("SetImageFormat")
+					}
+
+					// Write to file
+					err = mw.WriteImages(outFile, true)
+					if err != nil {
+						log.WithError(err).Error("cmd")
+						return restutil.ErrInternalServer().Send(c)
+					}
 				}
 			}
 
